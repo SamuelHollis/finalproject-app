@@ -1,1 +1,6 @@
-streamlit
+transformers
+model
+utils
+pandas
+matplotlib
+seaborn
