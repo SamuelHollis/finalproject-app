@@ -300,18 +300,6 @@ if uploaded_file is not None:
 st.subheader("📝 Analyze a Single Sentence")
 
 # Campo para que el usuario ingrese una oración
-user_input = st.text_area("Write a sentence to analyze", "")
-
-# Section 2: Individual Sentence Analysis
-st.subheader("📝 Analyze a Single Sentence")
-
-# Campo para que el usuario ingrese una oración
-user_input = st.text_area("Write a sentence to analyze", "")
-
-# Section 2: Individual Sentence Analysis
-st.subheader("📝 Analyze a Single Sentence")
-
-# Campo para que el usuario ingrese una oración
 user_input = st.text_area("Write a sentence to analyze", "", key="single_sentence_input")
 
 if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
