@@ -71,9 +71,10 @@ body {
 }
 
 [data-testid="stAppViewContainer"] {
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay for readability */
+    background: rgba(0, 0, 0, 0.7); /* Darker overlay for better readability */
     background-blend-mode: overlay;
     padding: 2rem;
+    color: white; /* Ensure text is white and more visible */
 }
 
 h1 {
@@ -106,7 +107,7 @@ h2, h3 {
 }
 
 .stTextArea textarea {
-    background-color: #6B6B6B; /* A slightly darker gray for the text area */
+    background-color: rgba(107, 107, 107, 0.9); /* More opaque gray for the text area */
     border-radius: 12px;
     font-size: 16px;
     padding: 15px;
@@ -118,7 +119,7 @@ footer {
 }
 
 .result-card {
-    background-color: rgba(107, 107, 107, 0.7); /* Slightly transparent dark gray for the result cards */
+    background-color: rgba(107, 107, 107, 0.9); /* More opaque dark gray for the result cards */
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
