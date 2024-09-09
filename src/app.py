@@ -1,35 +1,42 @@
 import streamlit as st
-from model import analyze_sentiment
-from utils import visualize_sentiment_distribution, process_comments
+import matplotlib.pyplot as plt
+from transformers import pipeline
 
-# CSS personalizado para el fondo con gradiente en tonos pastel
-page_bg_img = '''
+# Cargar el modelo de análisis de sentimiento usando RoBERTa (Twitter)
+@st.cache_resource
+def load_model():
+    return pipeline('sentiment-analysis', model="cardiffnlp/twitter-roberta-base-sentiment")
+
+# Función para analizar el sentimiento y devolver los resultados
+def analyze_sentiment(text):
+    model = load_model()
+    return model(text)
+
+# CSS personalizado
+page_bg_css = '''
 <style>
+body {
+    background: #F5F5F5; /* Fondo más oscuro */
+}
+
 [data-testid="stAppViewContainer"] {
     background: linear-gradient(to bottom, #FFB3B3, #FFFFFF, #B3C6FF);
     background-size: cover;
-}
-
-[data-testid="stHeader"] {
-    background: rgba(0, 0, 0, 0);
-}
-
-[data-testid="stToolbar"] {
-    right: 2rem;
-}
-
-body {
-    color: black;
+    background-attachment: fixed; /* Hace que el fondo sea dinámico y se mueva con el scroll */
 }
 
 h1 {
-    color: #D64545; /* Rojo pastel para el título */
+    color: #003366; /* Azul oscuro para el título */
     text-align: center;
     font-family: Arial, sans-serif;
 }
 
+p, div, span {
+    color: #000000; /* Negro para el resto de los textos */
+}
+
 .stButton>button {
-    background-color: #7386D5; /* Azul pastel */
+    background-color: #003366; /* Azul oscuro para el botón */
     color: white;
     border-radius: 5px;
     padding: 10px;
@@ -42,6 +49,13 @@ h1 {
     color: #000000; /* Texto negro */
     font-size: 16px;
     padding: 10px;
+    border-radius: 8px; /* Bordes redondeados para el área de texto */
+}
+
+.stPlotlyChart div {
+    border: 2px solid #003366; /* Azul oscuro para el borde del gráfico */
+    border-radius: 15px; /* Bordes redondeados para el gráfico */
+    padding: 10px;
 }
 
 footer {
@@ -51,14 +65,7 @@ footer {
 '''
 
 # Inyectar el CSS personalizado en la aplicación
-st.markdown(page_bg_img, unsafe_allow_html=True)
-
-# Mapeo de las etiquetas numéricas a etiquetas de texto
-label_mapping = {
-    'LABEL_0': 'Negativo',
-    'LABEL_1': 'Neutro',
-    'LABEL_2': 'Positivo'
-}
+st.markdown(page_bg_css, unsafe_allow_html=True)
 
 # Título de la aplicación
 st.title("Análisis de Sentimiento de Comentarios sobre las Elecciones de USA")
@@ -70,35 +77,35 @@ user_input = st.text_area("Escribe un comentario para analizar", "")
 if st.button("Analizar"):
     if user_input:
         # Llama a la función que analiza el sentimiento
-        result = analyze_sentiment(user_input)
+        results = analyze_sentiment(user_input)
 
-        # Obtener la etiqueta y la confianza
-        label = result[0]['label']
-        score = result[0]['score']
+        # Mapeo de las etiquetas devueltas por RoBERTa
+        label_mapping = {
+            'LABEL_0': 'Negativo',
+            'LABEL_1': 'Neutro',
+            'LABEL_2': 'Positivo'
+        }
 
-        # Mapea la etiqueta numérica a un texto descriptivo (Negativo, Neutro, Positivo)
-        sentiment_text = label_mapping[label]
+        # Mostrar las probabilidades de cada etiqueta
+        for result in results:
+            label = result['label']  # Etiqueta devuelta por el modelo ('LABEL_0', 'LABEL_1', etc.)
+            score = result['score']  # Probabilidad asociada a esa etiqueta
+            sentiment_text = label_mapping[label]  # Convertir la etiqueta en texto descriptivo
+            st.write(f"**{sentiment_text}:** {score * 100:.2f}%")
 
-        # Mostrar el resultado al usuario
-        st.write(f"**Sentimiento:** {sentiment_text}")
-        st.write(f"**Confianza:** {score:.2f}")
+        # Determinar el sentimiento con mayor probabilidad
+        most_probable_sentiment = max(results, key=lambda x: x['score'])
+        sentiment_text = label_mapping[most_probable_sentiment['label']]
+        st.write(f"**Sentimiento predominante:** {sentiment_text} ({most_probable_sentiment['score'] * 100:.2f}%)")
+
+        # Crear un gráfico de barras para visualizar los resultados
+        labels = ['Negativo', 'Neutro', 'Positivo']
+        scores = [result['score'] * 100 for result in results]
+
+        fig, ax = plt.subplots()
+        ax.bar(labels, scores, color=['#FFB3B3', '#D3D3D3', '#B3C6FF'])
+        ax.set_ylabel('Probabilidad (%)')
+        ax.set_title('Distribución de Sentimientos')
         
-        # Visualización del sentimiento
-        st.bar_chart([score, 1 - score])
-
-# Análisis de múltiples comentarios
-st.subheader("Análisis de múltiples comentarios")
-uploaded_file = st.file_uploader("Sube un archivo CSV con comentarios", type=["csv"])
-
-if uploaded_file:
-    # Procesar archivo CSV
-    comments_df = pd.read_csv(uploaded_file)
-    comments = comments_df['comment'].tolist()
-    cleaned_comments = process_comments(comments)
-
-    # Analizar cada comentario
-    results = [analyze_sentiment(comment) for comment in cleaned_comments]
-
-    # Visualización de resultados agregados
-    visualize_sentiment_distribution(results)
-
+        # Mostrar el gráfico con el estilo de bordes redondeados
+        st.pyplot(fig)
