@@ -36,36 +36,135 @@ label_mapping = {
 }
 
 # Function to analyze sentiments in a DataFrame (CSV)
-def analyze_sentiments_chunked(df):
-    sentiment_list = []
-    score_list = []
-    total_rows = len(df)
-    
-    # Crear la barra de progreso
-    progress_bar = st.progress(0)
+import time
+import streamlit as st
+import logging
+import pandas as pd
 
-    for idx, text in enumerate(df['text']):
-        logging.info(f"Processing comment {idx + 1}/{len(df)}")
+# Function to split text into chunks respecting the token limit
+def chunk_text(text, tokenizer, chunk_size=512):
+    tokens = tokenizer(text, truncation=True, max_length=chunk_size, return_tensors='pt')
+    input_ids = tokens.input_ids[0]
+    for i in range(0, len(input_ids), chunk_size):
+        chunk_ids = input_ids[i:i + chunk_size]
+        yield tokenizer.decode(chunk_ids, skip_special_tokens=True)
+# Backoff variables
+initial_backoff = 5
+max_backoff = 300
+backoff_factor = 2
+def backoff_sleep(intento):
+    sleep_time = min(initial_backoff * (backoff_factor ** intento), max_backoff)
+    logging.info(f"Rate limit hit. Sleeping for {sleep_time} seconds...")
+    time.sleep(sleep_time)
+# Define save path
+ruta_guardado = r"C:\Users\samue\OneDrive\Escritorio\all_hotscrape_v2p10000.csv"
+# Function to save progress
+def guardar_progreso(df):
+    if not df.empty:
         try:
-            # Ejecutar el análisis de sentimiento
-            result = sentiment_analysis(text)
-            sentiment = result[0]['label']
-            score = result[0]['score']
+            logging.info("Guardando el progreso...")
+            arch_existe = os.path.isfile(ruta_guardado)
+            # If the file exists, append without header; otherwise, write with header
+            df.to_csv(ruta_guardado, mode='a', header=not arch_existe, index=False)
+            logging.info(f"Se han guardado {len(df)} instancias correctamente")
         except Exception as e:
-            logging.error(f"Error processing text: {e}")
-            sentiment = "error"
-            score = 0.0
+            logging.error(f"Ha habido un error al guardar el progreso: {e}")
+            logging.info(f"{len(df)} instancias no guardadas")
+            
+# Función para analizar en chunks y permitir la descarga de resultados como CSV
+def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, client, chunk_size=512, process_chunk_size=5000):
+    intento = 0
+    processed_count = 0
+    ch_num = 0
 
-        sentiment_list.append(sentiment)
-        score_list.append(score)
+    # Inicializar la barra de progreso
+    total_chunks = len(df) // process_chunk_size + (1 if len(df) % process_chunk_size > 0 else 0)
+    progress_bar = st.progress(0)
+    progress_text = st.empty()
 
-        # Actualizar la barra de progreso
-        progress_bar.progress((idx + 1) / total_rows)
+    # Procesar el dataframe en chunks de `process_chunk_size`
+    for start in range(0, len(df), process_chunk_size):
+        ch_num += 1
+        end = min(start + process_chunk_size, len(df))
+        chunk_df = df.iloc[start:end]
+        sentiment_list = []
+        score_list = []
+        logging.info(f"Analyzing chunk n.{ch_num}")
+        st.write(f"Processing chunk n.{ch_num} of {total_chunks}...")
 
-    # Agregar los resultados al DataFrame
-    df['sentiment'] = sentiment_list
-    df['score'] = score_list
-    return df
+        for idx, text in enumerate(chunk_df['text']):
+            while True:
+                try:
+                    chunks = list(chunk_text(text, tokenizer, chunk_size=chunk_size))
+                    break  # Salir del bucle si se procesan correctamente los chunks
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code == 429:
+                        backoff_sleep(intento)
+                        intento += 1
+                        st.warning(f"Rate limit hit, retrying (attempt {intento})...")
+                    else:
+                        logging.error(f"Unknown issue: {e}")
+                        st.error(f"Error processing text: {e}")
+                        break
+
+            # Análisis de sentimiento por chunks
+            overall_sentiment = None
+            max_score = -1  # Inicializar para que cualquier puntuación sea más alta
+            for chunk in chunks:
+                while True:
+                    try:
+                        response = client.text_classification(
+                            model="cardiffnlp/twitter-roberta-base-sentiment",
+                            text=chunk
+                        )
+                        break
+                    except requests.exceptions.HTTPError as e:
+                        if e.response.status_code == 429:
+                            backoff_sleep(intento)
+                            intento += 1
+                            st.warning(f"Rate limit hit again, retrying...")
+                        else:
+                            logging.error(f"Unexpected error: {e}")
+                            st.error(f"Unexpected error: {e}")
+                            break
+                
+                # Encontrar la etiqueta con la puntuación más alta
+                for element in response:
+                    if element['score'] > max_score:
+                        max_score = element['score']
+                        overall_sentiment = element['label']
+
+            sentiment_list.append(overall_sentiment)
+            score_list.append(max_score)
+            time.sleep(rate_limit_sleep)  # Pausa entre peticiones para evitar el límite
+
+        # Asignar los resultados al chunk procesado
+        df.loc[start:end-1, 'sentiment'] = sentiment_list
+        df.loc[start:end-1, 'score'] = score_list
+        processed_count += len(chunk_df)
+
+        # Actualizar barra de progreso
+        progress_percentage = (ch_num / total_chunks)
+        progress_bar.progress(progress_percentage)
+        progress_text.text(f"Processed {ch_num} of {total_chunks} chunks")
+
+    # Completar la barra de progreso
+    progress_bar.progress(1.0)
+    progress_text.text("Processing complete!")
+    st.success("Sentiment analysis complete!")
+
+    # Convertir el DataFrame en CSV
+    csv = df.to_csv(index=False).encode('utf-8')
+
+    # Añadir botón para descargar el archivo CSV
+    st.download_button(
+        label="⬇️ Download results as CSV",
+        data=csv,
+        file_name='sentiment_analysis_results.csv',
+        mime='text/csv',
+    )
+
+
 
 # CSS for a modern and clean look
 page_bg_css = '''
