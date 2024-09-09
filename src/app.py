@@ -71,7 +71,7 @@ body {
 }
 
 h1 {
-    color: #4169E1; /* Dark blue (like the US flag) for the title */
+    color: #B22222; /* Firebrick for the title */
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
