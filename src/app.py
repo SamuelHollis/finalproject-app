@@ -26,7 +26,7 @@ def load_local_model():
     return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1), tokenizer
 
 # Cargar el modelo local
-sentiment_analysis, tokenizer = load_local_model()
+model, tokenizer = load_local_model()
 
 # Mapeo de etiquetas de RoBERTa a sentimientos comprensibles
 label_mapping = {
@@ -222,7 +222,7 @@ if uploaded_file is not None:
         else:
             with st.spinner("🔄 Analyzing sentiments, please wait..."):
                 # Llamar a la función con todos los parámetros requeridos
-                analyzed_df = analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size=5000)
+                analyzed_df = analyze_sentiments_chunked(df, tokenizer, chunk_size=512)
 
             st.success("✅ Analysis complete!")
 
