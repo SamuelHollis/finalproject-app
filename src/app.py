@@ -2,23 +2,23 @@ import streamlit as st
 from model import analyze_sentiment
 from utils import visualize_sentiment_distribution, process_comments
 
-# CSS personalizado para el fondo y los colores
+# CSS personalizado para el fondo con gradiente en tonos pastel
 page_bg_img = '''
 <style>
 body {
-    background-image: url("https://www.example.com/fondo-bandera.jpg");
+    background: linear-gradient(to bottom, #FFB3B3, #FFFFFF, #B3C6FF);
     background-size: cover;
-    color: white;
+    color: black;
 }
 
 h1 {
-    color: #FF0000; /* Rojo para el título */
+    color: #D64545; /* Rojo pastel para el título */
     text-align: center;
     font-family: Arial, sans-serif;
 }
 
 .stButton>button {
-    background-color: #3B3B6D; /* Azul */
+    background-color: #7386D5; /* Azul pastel */
     color: white;
     border-radius: 5px;
     padding: 10px;
