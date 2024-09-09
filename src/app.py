@@ -4,12 +4,20 @@ import time
 from huggingface_hub import InferenceClient
 from transformers import AutoTokenizer
 import logging
+import os
+from dotenv import load_dotenv
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Cargar las variables de entorno desde el archivo .env
+load_dotenv()
+
+# Obtener el token de Hugging Face desde las variables de entorno
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
+
 # Autenticación con Hugging Face
-client = InferenceClient(token="tu_token_aqui")  # Reemplaza "tu_token_aqui" con tu token real de Hugging Face
+client = InferenceClient(token=HUGGINGFACE_TOKEN)
 
 # Cargar el tokenizador
 tokenizer = AutoTokenizer.from_pretrained("cardiffnlp/twitter-roberta-base-sentiment")
