@@ -34,69 +34,40 @@ label_mapping = {
     'LABEL_2': 'Positive'
 }
 
-# Función para dividir texto en fragmentos respetando el límite de tokens
-def chunk_text(text, tokenizer, chunk_size=512):
-    tokens = tokenizer(text, truncation=True, max_length=chunk_size, return_tensors='pt')
-    input_ids = tokens.input_ids[0]
-    for i in range(0, len(input_ids), chunk_size):
-        chunk_ids = input_ids[i:i + chunk_size]
-        yield tokenizer.decode(chunk_ids, skip_special_tokens=True)
-
-# Función para analizar los sentimientos en chunks y actualizar la barra de progreso
-def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size=5000):
-    ch_num = 0
-    total_chunks = len(df) // process_chunk_size + (1 if len(df) % process_chunk_size > 0 else 0)
-
-    # Inicializar la barra de progreso y el texto de progreso
+# Función para analizar los sentimientos de un archivo CSV y actualizar la barra de progreso
+def analyze_sentiments_csv(df, chunk_size=512, process_chunk_size=5000):
+    total_chunks = len(df)
     progress_bar = st.progress(0)
     progress_text = st.empty()
 
-    # Procesar el DataFrame en chunks
-    for start in range(0, len(df), process_chunk_size):
-        ch_num += 1
-        end = min(start + process_chunk_size, len(df))
-        chunk_df = df.iloc[start:end]
-        sentiment_list = []
-        score_list = []
-        logging.info(f"Processing chunk {ch_num} of {total_chunks}")
-        st.write(f"Processing chunk {ch_num} of {total_chunks}...")  # Mostrar mensaje en la interfaz
+    sentiments = []
+    scores = []
 
-        for idx, text in enumerate(chunk_df['text']):
-            chunks = list(chunk_text(text, tokenizer, chunk_size=chunk_size))
-            overall_sentiment = None
-            max_score = -1
+    for idx, row in df.iterrows():
+        text = row['text']
+        # Análisis de sentimiento con el pipeline cargado
+        try:
+            response = sentiment_analysis(text)
+            sentiment = label_mapping[response[0]['label']]
+            score = response[0]['score']
+        except Exception as e:
+            st.error(f"Error during sentiment analysis: {e}")
+            sentiment = "error"
+            score = 0.0
 
-            for chunk in chunks:
-                try:
-                    response = sentiment_analysis(chunk)
-                    # Encontrar la etiqueta con la puntuación más alta
-                    for element in response:
-                        if element['score'] > max_score:
-                            max_score = element['score']
-                            overall_sentiment = element['label']
-                except Exception as e:
-                    logging.error(f"Error in sentiment analysis: {e}")
-                    st.error(f"Error in sentiment analysis: {e}")
-                    continue
+        sentiments.append(sentiment)
+        scores.append(score)
 
-            sentiment_list.append(overall_sentiment)
-            score_list.append(max_score)
-
-        # Asignar los resultados al chunk procesado
-        df.loc[start:end-1, 'sentiment'] = sentiment_list
-        df.loc[start:end-1, 'score'] = score_list
-
-        # Actualizar barra de progreso y texto
-        progress_percentage = ch_num / total_chunks
+        # Actualizar barra de progreso
+        progress_percentage = (idx + 1) / total_chunks
         progress_bar.progress(progress_percentage)
-        progress_text.text(f"Processed {ch_num} of {total_chunks} chunks")
+        progress_text.text(f"Processing {idx + 1} of {total_chunks}")
 
-        # Añadir una pequeña pausa para no sobrecargar la CPU
-        time.sleep(0.1)
+    df['sentiment'] = sentiments
+    df['score'] = scores
 
     # Completar la barra de progreso
     progress_bar.progress(1.0)
-    progress_text.text("Analysis complete!")
     st.success("Sentiment analysis complete!")
 
     # Convertir el DataFrame en CSV y permitir la descarga
@@ -110,93 +81,88 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
 
     return df
 
-# Función para calcular y mostrar los porcentajes de sentimiento
+# Función para calcular los porcentajes de cada sentimiento
 def calculate_sentiment_percentages(df):
-    # Contar la frecuencia de cada sentimiento
     sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
-    sentiments = ['LABEL_0', 'LABEL_1', 'LABEL_2']  # LABEL_0: Negative, LABEL_1: Neutral, LABEL_2: Positive
-    
-    # Crear una lista con los porcentajes de cada sentimiento
-    percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
-    return percentages
+    return [sentiment_counts.get('Negative', 0), sentiment_counts.get('Neutral', 0), sentiment_counts.get('Positive', 0)]
 
-# Inyección del CSS en la aplicación
+# CSS para mejorar el aspecto
 page_bg_css = '''
 <style>
 body {
-    background: url("https://www.omfif.org/wp-content/uploads/2024/01/GettyImages-1183053829.jpg"); /* Background image */
+    background: url("https://www.omfif.org/wp-content/uploads/2024/01/GettyImages-1183053829.jpg");
     background-size: cover;
     background-position: cover;
     background-repeat: no-repeat;
     font-family: 'Helvetica Neue', sans-serif;
-    opacity: 0.7; /* Slight opacity to blend the background */
+    opacity: 0.7;
 }
 [data-testid="stAppViewContainer"] {
-    background: rgba(0, 0, 0, 0.7); /* Darker overlay for better readability */
+    background: rgba(0, 0, 0, 0.7);
     background-blend-mode: overlay;
     padding: 2rem;
-    color: white; /* Ensure text is white and more visible */
+    color: white;
 }
 h1 {
-    color: #B22222; /* Firebrick for the title */
+    color: #B22222;
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
     opacity: 1;
-    background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white background */
+    background-color: rgba(255, 255, 255, 0.5);
     padding: 4px;
-    border-radius: 10px; 
-    max-width: 500px; /* Limit the width */
-    margin-left: auto; /* Center the element */
-    margin-right: auto; /* Center the element */
+    border-radius: 10px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
 }
 h2, h3 {
-    color: white; /* White text for subtitles */
+    color: white;
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
 }
 .stButton>button {
-    background-color: #1E90FF; /* DodgerBlue */
+    background-color: #1E90FF;
     color: white;
     font-size: 18px;
-    border-radius: 12px; /* Rounded corners */
+    border-radius: 12px;
     padding: 10px 20px;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Soft shadow */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 .stButton>button:hover {
-    background-color: #1E90FF; /* Lighter blue on hover */
-    transform: scale(1.05); /* Subtle zoom effect */
+    background-color: #1E90FF;
+    transform: scale(1.05);
 }
 .stTextArea textarea {
-    background-color: rgba(107, 107, 107, 0.9); /* More opaque gray for the text area */
+    background-color: rgba(107, 107, 107, 0.9);
     border-radius: 12px;
     font-size: 16px;
     padding: 15px;
-    color: white; /* White text */
+    color: white;
 }
 footer {
     visibility: hidden;
 }
 .result-card {
-    background-color: rgba(107, 107, 107, 0.8); /* Más opaca */
+    background-color: rgba(107, 107, 107, 0.8);
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    color: white; /* White text for the result cards */
+    color: white;
 }
 .card-header {
     font-size: 24px;
     font-weight: bold;
-    color: #1E90FF; /* Blue header for the result card */
+    color: #1E90FF;
     margin-bottom: 15px;
 }
 </style>
 '''
 
-# Injectar el CSS en la aplicación
+# Inyectar CSS
 st.markdown(page_bg_css, unsafe_allow_html=True)
 
 # Título de la aplicación
@@ -220,35 +186,25 @@ if uploaded_file is not None:
             st.error("The CSV file must contain a 'text' column.")
         else:
             with st.spinner("🔄 Analyzing sentiments, please wait..."):
-                # Llamar a la función con todos los parámetros requeridos
-                analyzed_df = analyze_sentiments_chunked(df, tokenizer, chunk_size=512)
+                analyzed_df = analyze_sentiments_csv(df)
 
             st.success("✅ Analysis complete!")
 
-            # Display results
+            # Mostrar resultados
             st.write("Analysis Results:")
             st.write(analyzed_df.head())
 
-            # Calculate and display sentiment percentages
+            # Calcular y mostrar porcentajes de sentimientos
             percentages = calculate_sentiment_percentages(analyzed_df)
             labels = ['Negative', 'Neutral', 'Positive']
-            colors = ['#FF6B6B', '#F7D794', '#4CAF50']  # Colors for negative, neutral, positive
+            colors = ['#FF6B6B', '#F7D794', '#4CAF50']
 
-            # Create a bar chart
+            # Crear gráfico de barras
             fig, ax = plt.subplots()
             ax.barh(labels, percentages, color=colors)
             ax.set_xlabel('Percentage (%)')
             ax.set_title('Sentiment Distribution')
             st.pyplot(fig)
-
-            # Download the results as a CSV without an index
-            csv = analyzed_df.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="⬇️ Download results as CSV",
-                data=csv,
-                file_name='sentiment_analysis_results.csv',
-                mime='text/csv',
-            )
 
 # Section 2: Individual Sentence Analysis
 st.subheader("📝 Analyze a Single Sentence")
