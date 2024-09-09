@@ -73,7 +73,8 @@ def guardar_progreso(df):
             logging.info(f"{len(df)} instancias no guardadas")
 
 # Función para analizar en chunks y permitir la descarga de resultados como CSV
-def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, client, chunk_size=512, process_chunk_size=5000):
+# Función para analizar en chunks y permitir la descarga de resultados como CSV
+def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512, process_chunk_size=5000):
     intento = 0
     processed_count = 0
     ch_num = 0
@@ -96,6 +97,7 @@ def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, client, chunk_si
         for idx, text in enumerate(chunk_df['text']):
             while True:
                 try:
+                    # Dividir en chunks
                     chunks = list(chunk_text(text, tokenizer, chunk_size=chunk_size))
                     break  # Salir del bucle si se procesan correctamente los chunks
                 except requests.exceptions.HTTPError as e:
@@ -112,23 +114,14 @@ def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, client, chunk_si
             overall_sentiment = None
             max_score = -1  # Inicializar para que cualquier puntuación sea más alta
             for chunk in chunks:
-                while True:
-                    try:
-                        response = client.text_classification(
-                            model="cardiffnlp/twitter-roberta-base-sentiment",
-                            text=chunk
-                        )
-                        break
-                    except requests.exceptions.HTTPError as e:
-                        if e.response.status_code == 429:
-                            backoff_sleep(intento)
-                            intento += 1
-                            st.warning(f"Rate limit hit again, retrying...")
-                        else:
-                            logging.error(f"Unexpected error: {e}")
-                            st.error(f"Unexpected error: {e}")
-                            break
-                
+                try:
+                    # Usar el pipeline `sentiment_analysis` que está cargado localmente
+                    response = sentiment_analysis(chunk)
+                except Exception as e:
+                    logging.error(f"Unexpected error: {e}")
+                    st.error(f"Unexpected error: {e}")
+                    continue
+
                 # Encontrar la etiqueta con la puntuación más alta
                 for element in response:
                     if element['score'] > max_score:
@@ -164,8 +157,6 @@ def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, client, chunk_si
         file_name='sentiment_analysis_results.csv',
         mime='text/csv',
     )
-
-
 
 # CSS for a modern and clean look
 page_bg_css = '''
@@ -311,6 +302,12 @@ st.subheader("📝 Analyze a Single Sentence")
 # Campo para que el usuario ingrese una oración
 user_input = st.text_area("Write a sentence to analyze", "")
 
+# Section 2: Individual Sentence Analysis
+st.subheader("📝 Analyze a Single Sentence")
+
+# Campo para que el usuario ingrese una oración
+user_input = st.text_area("Write a sentence to analyze", "")
+
 if st.button("📊 Analyze Sentence"):
     if user_input:  # Si el usuario ha ingresado texto
         with st.spinner("🔄 Analyzing sentence..."):
@@ -337,7 +334,7 @@ if st.button("📊 Analyze Sentence"):
                 <div class="result-card">
                     <div class="card-header">Analysis Result:</div>
                     <p><strong>Sentiment:</strong> {sentiment}</p>
-                    <p><strong>Confidence:</strong> {confidence:.2f}</p>
+                    <p><strong>Confidence:</strong> {confidence:.2f}%</p>
                 </div>
                 """, unsafe_allow_html=True)
 
