@@ -82,11 +82,13 @@ h1 {
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
-    opacity: 1; /* Fully opaque title */
+    opacity: 1;
     background-color: rgba(255, 255, 255, 0.4); /* Semi-transparent white background */
     padding: 4px;
-    border-radius: 10px; /* Rounded corners */
-    display: inline-block; /* Shrink background to text width */
+    border-radius: 10px; 
+    max-width: 600px; /* Limit the width */
+    margin-left: auto; /* Center the element */
+    margin-right: auto; /* Center the element */
 }
 
 h2, h3 {
