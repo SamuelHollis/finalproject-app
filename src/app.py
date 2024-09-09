@@ -47,10 +47,11 @@ def chunk_text(text, tokenizer, chunk_size=512):
 def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size=5000):
     ch_num = 0
 
-    # Inicializar la barra de progreso
+    # Inicializar la barra de progreso y el mensaje de estado
     total_chunks = len(df) // process_chunk_size + (1 if len(df) % process_chunk_size > 0 else 0)
     progress_bar = st.progress(0)
     progress_text = st.empty()
+    progress_text.text("Analyzing...")  # Texto que muestra el estado de análisis
 
     # Procesar el dataframe en chunks de `process_chunk_size`
     for start in range(0, len(df), process_chunk_size):
@@ -59,8 +60,6 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
         chunk_df = df.iloc[start:end]
         sentiment_list = []
         score_list = []
-        logging.info(f"Analyzing chunk n.{ch_num}")
-        st.write(f"Processing chunk n.{ch_num} of {total_chunks}...")
 
         for idx, text in enumerate(chunk_df['text']):
             # Dividir en chunks
@@ -95,11 +94,10 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
         # Actualizar barra de progreso
         progress_percentage = (ch_num / total_chunks)
         progress_bar.progress(progress_percentage)
-        progress_text.text(f"Processed {ch_num} of {total_chunks} chunks")
 
     # Completar la barra de progreso
     progress_bar.progress(1.0)
-    progress_text.text("Processing complete!")
+    progress_text.text("Analysis Complete!")
     st.success("Sentiment analysis complete!")
 
     # Convertir el DataFrame en CSV
@@ -123,7 +121,7 @@ def calculate_sentiment_percentages(df):
     percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
     return percentages
 
-# CSS for a modern and clean look
+# Inyección del CSS en la aplicación
 page_bg_css = '''
 <style>
 body {
@@ -134,14 +132,12 @@ body {
     font-family: 'Helvetica Neue', sans-serif;
     opacity: 0.7; /* Slight opacity to blend the background */
 }
-
 [data-testid="stAppViewContainer"] {
     background: rgba(0, 0, 0, 0.7); /* Darker overlay for better readability */
     background-blend-mode: overlay;
     padding: 2rem;
     color: white; /* Ensure text is white and more visible */
 }
-
 h1 {
     color: #B22222; /* Firebrick for the title */
     font-weight: 700;
@@ -155,14 +151,12 @@ h1 {
     margin-left: auto; /* Center the element */
     margin-right: auto; /* Center the element */
 }
-
 h2, h3 {
     color: white; /* White text for subtitles */
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
 }
-
 .stButton>button {
     background-color: #1E90FF; /* DodgerBlue */
     color: white;
@@ -172,12 +166,10 @@ h2, h3 {
     transition: all 0.3s ease;
     box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Soft shadow */
 }
-
 .stButton>button:hover {
     background-color: #1E90FF; /* Lighter blue on hover */
     transform: scale(1.05); /* Subtle zoom effect */
 }
-
 .stTextArea textarea {
     background-color: rgba(107, 107, 107, 0.9); /* More opaque gray for the text area */
     border-radius: 12px;
@@ -185,11 +177,9 @@ h2, h3 {
     padding: 15px;
     color: white; /* White text */
 }
-
 footer {
     visibility: hidden;
 }
-
 .result-card {
     background-color: rgba(107, 107, 107, 0.8); /* Más opaca */
     border-radius: 15px;
@@ -198,7 +188,6 @@ footer {
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     color: white; /* White text for the result cards */
 }
-
 .card-header {
     font-size: 24px;
     font-weight: bold;
@@ -208,13 +197,13 @@ footer {
 </style>
 '''
 
-# Inject CSS into the application
+# Injectar el CSS en la aplicación
 st.markdown(page_bg_css, unsafe_allow_html=True)
 
-# Title of the application
+# Título de la aplicación
 st.title("Sentiment Analysis")
 
-# Section 1: CSV File Analysis
+# Sección 1: Análisis de archivo CSV
 st.subheader("📂 Analyze CSV File")
 uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
 
@@ -222,20 +211,16 @@ if uploaded_file is not None:
     # Cargar el archivo CSV sin incluir el índice como columna
     df = pd.read_csv(uploaded_file, index_col=None)
 
-    # Display the first few records of the CSV
+    # Mostrar las primeras filas del CSV
     st.write("First 5 comments from the file:")
     st.write(df.head())
 
-    # Button to execute sentiment analysis on the CSV
+    # Botón para ejecutar el análisis de sentimientos en el CSV
     if st.button("🔍 Analyze Sentiments in CSV"):
         if 'text' not in df.columns:
             st.error("The CSV file must contain a 'text' column.")
         else:
             with st.spinner("🔄 Analyzing sentiments, please wait..."):
-                # Obtener el tokenizador desde el pipeline que ya cargaste
-                tokenizer = sentiment_analysis.tokenizer
-                rate_limit_sleep = 1  # Puedes ajustar este valor según tu necesidad
-                
                 # Llamar a la función con todos los parámetros requeridos
                 analyzed_df = analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size=5000)
 
@@ -265,7 +250,6 @@ if uploaded_file is not None:
                 file_name='sentiment_analysis_results.csv',
                 mime='text/csv',
             )
-
 
 # Section 2: Individual Sentence Analysis
 st.subheader("📝 Analyze a Single Sentence")
