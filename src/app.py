@@ -62,16 +62,23 @@ def calculate_sentiment_percentages(df):
 page_bg_css = '''
 <style>
 body {
-    background: linear-gradient(135deg, #f5f7fa, #c3cfe2); /* Gradient background */
+    background: #4a4a4a; /* Soft gray background */
     font-family: 'Helvetica Neue', sans-serif;
 }
 
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(to bottom, #f5f7fa, #f5f7fa);
+    background: #4a4a4a; /* Soft gray background */
 }
 
-h1, h2, h3 {
-    color: #2C3E50; /* Dark blue */
+h1 {
+    color: #3C3B6E; /* Dark blue (like the US flag) for the title */
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+h2, h3 {
+    color: white; /* White text for subtitles */
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
@@ -93,11 +100,11 @@ h1, h2, h3 {
 }
 
 .stTextArea textarea {
-    background-color: #ECF0F1;
+    background-color: #6B6B6B; /* A slightly darker gray for the text area */
     border-radius: 12px;
     font-size: 16px;
     padding: 15px;
-    color: #2C3E50;
+    color: white; /* White text */
 }
 
 footer {
@@ -105,17 +112,18 @@ footer {
 }
 
 .result-card {
-    background-color: white;
+    background-color: #6B6B6B; /* Dark gray for the result cards */
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    color: white; /* White text for the result cards */
 }
 
 .card-header {
     font-size: 24px;
     font-weight: bold;
-    color: #2980B9;
+    color: #2980B9; /* Blue header for the result card */
     margin-bottom: 15px;
 }
 </style>
