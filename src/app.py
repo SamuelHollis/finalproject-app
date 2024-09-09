@@ -52,6 +52,13 @@ def calculate_sentiment_percentages(df):
     percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
     return percentages
 
+# Mapping RoBERTa labels to understandable sentiments
+label_mapping = {
+    'LABEL_0': 'Negative',
+    'LABEL_1': 'Neutral',
+    'LABEL_2': 'Positive'
+}
+
 # CSS for a modern and clean look
 page_bg_css = '''
 <style>
@@ -119,7 +126,7 @@ footer {
 st.markdown(page_bg_css, unsafe_allow_html=True)
 
 # Title of the application
-st.title("✨ Sentiment Analysis")
+st.title("Sentiment Analysis")
 
 # Section 1: CSV File Analysis
 st.subheader("📂 Analyze CSV File")
@@ -175,7 +182,7 @@ if st.button("📊 Analyze Sentence"):
     if user_input:
         with st.spinner("🔄 Analyzing sentence..."):
             result = sentiment_analysis(user_input)
-            sentiment = result[0]['label']
+            sentiment = label_mapping[result[0]['label']]  # Map the label to a sentiment
             score = result[0]['score']
 
             # Display results in a card
@@ -186,3 +193,4 @@ if st.button("📊 Analyze Sentence"):
                 <p><strong>Confidence:</strong> {score:.2f}</p>
             </div>
             """, unsafe_allow_html=True)
+
