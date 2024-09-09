@@ -6,73 +6,55 @@ import logging
 import numpy as np
 import torch
 import seaborn as sns
-import requests 
+import time
+import requests
 
-# Logging configuration
+# Configuración de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Download and load the model and tokenizer locally
+# Descargar y cargar el modelo y tokenizador localmente
 @st.cache_resource
 def load_local_model():
     model_name = "cardiffnlp/twitter-roberta-base-sentiment"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    
+
     # Detectar si CUDA está disponible
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+
     # Cargar el modelo y moverlo a la GPU si está disponible
     model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
-    
-    # Configurar el pipeline para usar GPU (device=0 para usar GPU)
-    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
 
-# Load the local model
-sentiment_analysis = load_local_model()
+    # Configurar el pipeline para usar GPU (device=0 para GPU)
+    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1), tokenizer
 
-# Mapping RoBERTa labels to understandable sentiments
+# Cargar el modelo local
+sentiment_analysis, tokenizer = load_local_model()
+
+# Mapeo de etiquetas de RoBERTa a sentimientos comprensibles
 label_mapping = {
     'LABEL_0': 'Negative',
     'LABEL_1': 'Neutral',
     'LABEL_2': 'Positive'
 }
 
-# Function to analyze sentiments in a DataFrame (CSV)
-import time
-import streamlit as st
-import logging
-import pandas as pd
-
-# Function to split text into chunks respecting the token limit
+# Función para dividir texto en fragmentos respetando el límite de tokens
 def chunk_text(text, tokenizer, chunk_size=512):
     tokens = tokenizer(text, truncation=True, max_length=chunk_size, return_tensors='pt')
     input_ids = tokens.input_ids[0]
     for i in range(0, len(input_ids), chunk_size):
         chunk_ids = input_ids[i:i + chunk_size]
         yield tokenizer.decode(chunk_ids, skip_special_tokens=True)
-# Backoff variables
+
+# Variables de backoff
 initial_backoff = 5
 max_backoff = 300
 backoff_factor = 2
+
 def backoff_sleep(intento):
     sleep_time = min(initial_backoff * (backoff_factor ** intento), max_backoff)
     logging.info(f"Rate limit hit. Sleeping for {sleep_time} seconds...")
     time.sleep(sleep_time)
-# Define save path
-ruta_guardado = r"C:\Users\samue\OneDrive\Escritorio\all_hotscrape_v2p10000.csv"
-# Function to save progress
-def guardar_progreso(df):
-    if not df.empty:
-        try:
-            logging.info("Guardando el progreso...")
-            arch_existe = os.path.isfile(ruta_guardado)
-            # If the file exists, append without header; otherwise, write with header
-            df.to_csv(ruta_guardado, mode='a', header=not arch_existe, index=False)
-            logging.info(f"Se han guardado {len(df)} instancias correctamente")
-        except Exception as e:
-            logging.error(f"Ha habido un error al guardar el progreso: {e}")
-            logging.info(f"{len(df)} instancias no guardadas")
 
-# Función para analizar en chunks y permitir la descarga de resultados como CSV
 # Función para analizar en chunks y permitir la descarga de resultados como CSV
 def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512, process_chunk_size=5000):
     intento = 0
@@ -267,7 +249,12 @@ if uploaded_file is not None:
             st.error("The CSV file must contain a 'text' column.")
         else:
             with st.spinner("🔄 Analyzing sentiments, please wait..."):
-                analyzed_df = analyze_sentiments_chunked(df)
+                # Obtener el tokenizador desde el pipeline que ya cargaste
+                tokenizer = sentiment_analysis.tokenizer
+                rate_limit_sleep = 1  # Puedes ajustar este valor según tu necesidad
+                
+                # Llamar a la función con todos los parámetros requeridos
+                analyzed_df = analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512, process_chunk_size=5000)
 
             st.success("✅ Analysis complete!")
 
@@ -295,6 +282,7 @@ if uploaded_file is not None:
                 file_name='sentiment_analysis_results.csv',
                 mime='text/csv',
             )
+
 
 # Section 2: Individual Sentence Analysis
 st.subheader("📝 Analyze a Single Sentence")
