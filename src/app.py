@@ -5,12 +5,6 @@ import time
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import torch
 
-# Verificar si la GPU está disponible
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    raise SystemError("GPU no disponible. Por favor, verifica tu configuración de CUDA.")
-
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
