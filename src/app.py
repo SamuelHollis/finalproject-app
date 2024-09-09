@@ -123,7 +123,7 @@ footer {
 .card-header {
     font-size: 24px;
     font-weight: bold;
-    color: #2980B9; /* Blue header for the result card */
+    color: #1E90FF; /* Blue header for the result card */
     margin-bottom: 15px;
 }
 </style>
