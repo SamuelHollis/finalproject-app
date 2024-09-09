@@ -308,7 +308,13 @@ st.subheader("📝 Analyze a Single Sentence")
 # Campo para que el usuario ingrese una oración
 user_input = st.text_area("Write a sentence to analyze", "")
 
-if st.button("📊 Analyze Sentence"):
+# Section 2: Individual Sentence Analysis
+st.subheader("📝 Analyze a Single Sentence")
+
+# Campo para que el usuario ingrese una oración
+user_input = st.text_area("Write a sentence to analyze", "", key="single_sentence_input")
+
+if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
     if user_input:  # Si el usuario ha ingresado texto
         with st.spinner("🔄 Analyzing sentence..."):
             try:
@@ -353,3 +359,4 @@ if st.button("📊 Analyze Sentence"):
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
+
