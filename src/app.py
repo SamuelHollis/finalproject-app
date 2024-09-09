@@ -62,7 +62,7 @@ def calculate_sentiment_percentages(df):
 page_bg_css = '''
 <style>
 body {
-    background: url("https://link-to-your-image.com/image.jpg"); /* Background image */
+    background: url("https://www.omfif.org/wp-content/uploads/2024/01/GettyImages-1183053829.jpg"); /* Background image */
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
