@@ -95,7 +95,7 @@ h2, h3 {
 }
 
 .stButton>button:hover {
-    background-color: #3498DB; /* Lighter blue on hover */
+    background-color: #1E90FF; /* Lighter blue on hover */
     transform: scale(1.05); /* Subtle zoom effect */
 }
 
