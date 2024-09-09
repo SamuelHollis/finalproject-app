@@ -51,19 +51,23 @@ def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512):
                         model="cardiffnlp/twitter-roberta-base-sentiment",
                         text=chunk
                     )
-                    break
+                    break  # Si la respuesta es exitosa, salimos del bucle
                 except Exception as e:
                     logging.error(f'Error al procesar el chunk: {e}')
                     if hasattr(e, 'response') and e.response.status_code == 429:
                         backoff_sleep(intento)
                         intento += 1
                     else:
+                        # Si hay un error y no es un rate limit, saltamos este chunk
+                        response = None
                         break
 
-            for element in response:
-                if element['score'] > max_score:
-                    max_score = element['score']
-                    overall_sentiment = element['label']
+            # Solo procesar si response tiene un valor
+            if response:
+                for element in response:
+                    if element['score'] > max_score:
+                        max_score = element['score']
+                        overall_sentiment = element['label']
 
         sentiment_list.append(overall_sentiment)
         score_list.append(max_score)
@@ -73,6 +77,7 @@ def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512):
     df['sentiment'] = sentiment_list
     df['score'] = score_list
     return df
+
 
 # Configuración del estilo con CSS
 page_bg_css = '''
