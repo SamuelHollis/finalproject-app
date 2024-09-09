@@ -16,10 +16,13 @@ def load_local_model():
     model_name = "cardiffnlp/twitter-roberta-base-sentiment"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     
-    # Cargar el modelo en GPU si está disponible
+    # Detectar si CUDA está disponible
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    # Cargar el modelo y moverlo a la GPU si está disponible
     model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
     
+    # Configurar el pipeline para usar GPU (device=0 para usar GPU)
     return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
 
 # Load the local model
