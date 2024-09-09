@@ -86,7 +86,7 @@ h1 {
     background-color: rgba(255, 255, 255, 0.4); /* Semi-transparent white background */
     padding: 4px;
     border-radius: 10px; 
-    max-width: 600px; /* Limit the width */
+    max-width: 500px; /* Limit the width */
     margin-left: auto; /* Center the element */
     margin-right: auto; /* Center the element */
 }
