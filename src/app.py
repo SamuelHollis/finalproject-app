@@ -18,8 +18,15 @@ def load_local_model():
 # Load the local model
 sentiment_analysis = load_local_model()
 
+# Mapping RoBERTa labels to understandable sentiments
+label_mapping = {
+    'LABEL_0': 'Negative',
+    'LABEL_1': 'Neutral',
+    'LABEL_2': 'Positive'
+}
+
 # Function to analyze sentiments in a DataFrame (CSV)
-def analyze_sentiments_chunked(df, rate_limit_sleep=1.0):
+def analyze_sentiments_chunked(df):
     sentiment_list = []
     score_list = []
 
@@ -38,7 +45,6 @@ def analyze_sentiments_chunked(df, rate_limit_sleep=1.0):
 
         sentiment_list.append(sentiment)
         score_list.append(score)
-        time.sleep(rate_limit_sleep)  # Pause between each analysis
 
     # Add the results to the DataFrame
     df['sentiment'] = sentiment_list
@@ -51,13 +57,6 @@ def calculate_sentiment_percentages(df):
     sentiments = ['LABEL_0', 'LABEL_1', 'LABEL_2']  # LABEL_0: Negative, LABEL_1: Neutral, LABEL_2: Positive
     percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
     return percentages
-
-# Mapping RoBERTa labels to understandable sentiments
-label_mapping = {
-    'LABEL_0': 'Negative',
-    'LABEL_1': 'Neutral',
-    'LABEL_2': 'Positive'
-}
 
 # CSS for a modern and clean look
 page_bg_css = '''
@@ -197,5 +196,3 @@ if st.button("📊 Analyze Sentence"):
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
-
-
