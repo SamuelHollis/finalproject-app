@@ -29,13 +29,16 @@ label_mapping = {
 def analyze_sentiments_chunked(df):
     sentiment_list = []
     score_list = []
+    total_rows = len(df)
+    
+    # Crear la barra de progreso
+    progress_bar = st.progress(0)
 
     for idx, text in enumerate(df['text']):
         logging.info(f"Processing comment {idx + 1}/{len(df)}")
         try:
-            # Execute sentiment analysis
+            # Ejecutar el análisis de sentimiento
             result = sentiment_analysis(text)
-            # Get the sentiment and score
             sentiment = result[0]['label']
             score = result[0]['score']
         except Exception as e:
@@ -46,17 +49,13 @@ def analyze_sentiments_chunked(df):
         sentiment_list.append(sentiment)
         score_list.append(score)
 
-    # Add the results to the DataFrame
+        # Actualizar la barra de progreso
+        progress_bar.progress((idx + 1) / total_rows)
+
+    # Agregar los resultados al DataFrame
     df['sentiment'] = sentiment_list
     df['score'] = score_list
     return df
-
-# Function to calculate and display sentiment percentages
-def calculate_sentiment_percentages(df):
-    sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
-    sentiments = ['LABEL_0', 'LABEL_1', 'LABEL_2']  # LABEL_0: Negative, LABEL_1: Neutral, LABEL_2: Positive
-    percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
-    return percentages
 
 # CSS for a modern and clean look
 page_bg_css = '''
@@ -83,7 +82,7 @@ h1 {
     text-align: center;
     margin-bottom: 15px;
     opacity: 1;
-    background-color: rgba(255, 255, 255, 0.4); /* Semi-transparent white background */
+    background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent white background */
     padding: 4px;
     border-radius: 10px; 
     max-width: 500px; /* Limit the width */
@@ -126,7 +125,7 @@ footer {
 }
 
 .result-card {
-    background-color: rgba(107, 107, 107, 0.9); /* More opaque dark gray for the result cards */
+    background-color: rgba(107, 107, 107, 0.8); /* Más opaca */
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
@@ -198,24 +197,41 @@ if uploaded_file is not None:
 
 # Section 2: Individual Sentence Analysis
 st.subheader("📝 Analyze a Single Sentence")
+
+# Campo para que el usuario ingrese una oración
 user_input = st.text_area("Write a sentence to analyze", "")
 
 if st.button("📊 Analyze Sentence"):
-    if user_input:
+    if user_input:  # Si el usuario ha ingresado texto
         with st.spinner("🔄 Analyzing sentence..."):
             try:
+                # Obtener los resultados completos de cada etiqueta
                 result = sentiment_analysis(user_input)
-                sentiment = label_mapping[result[0]['label']]  # Map the label to a sentiment
-                score = result[0]['score']
 
-                # Display results in a card
+                # Crear listas para las etiquetas y las puntuaciones
+                labels = [label_mapping[res['label']] for res in result]
+                scores = [res['score'] for res in result]
+
+                # Obtener la etiqueta con mayor probabilidad
+                max_index = scores.index(max(scores))
+                sentiment = labels[max_index]
+                confidence = scores[max_index]
+
+                # Mostrar el resultado del análisis
                 st.markdown(f"""
                 <div class="result-card">
                     <div class="card-header">Analysis Result:</div>
                     <p><strong>Sentiment:</strong> {sentiment}</p>
-                    <p><strong>Confidence:</strong> {score:.2f}</p>
+                    <p><strong>Confidence:</strong> {confidence:.2f}</p>
                 </div>
                 """, unsafe_allow_html=True)
+
+                # Graficar las probabilidades de cada etiqueta
+                fig, ax = plt.subplots()
+                ax.barh(labels, scores, color=['#FF6B6B', '#F7D794', '#4CAF50'])
+                ax.set_xlabel('Probability')
+                ax.set_title('Sentiment Probabilities')
+                st.pyplot(fig)
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
