@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import logging
 import numpy as np
+import torch
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -13,8 +14,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 def load_local_model():
     model_name = "cardiffnlp/twitter-roberta-base-sentiment"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name)
-    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
+    
+    # Cargar el modelo en GPU si está disponible
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
+    
+    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
 
 # Load the local model
 sentiment_analysis = load_local_model()
@@ -213,12 +218,17 @@ if st.button("📊 Analyze Sentence"):
                 labels = [label_mapping[res['label']] for res in result]
                 scores = [res['score'] for res in result]
 
-                # Obtener la etiqueta con mayor probabilidad
+                # Crear un DataFrame con las etiquetas y sus probabilidades
+                sentiment_df = pd.DataFrame({
+                    'Sentiment': labels,
+                    'Probability': [score * 100 for score in scores]  # Convertir a porcentaje
+                })
+
+                # Mostrar el resultado del análisis principal
                 max_index = scores.index(max(scores))
                 sentiment = labels[max_index]
                 confidence = scores[max_index]
 
-                # Mostrar el resultado del análisis
                 st.markdown(f"""
                 <div class="result-card">
                     <div class="card-header">Analysis Result:</div>
@@ -227,31 +237,17 @@ if st.button("📊 Analyze Sentence"):
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Graficar las probabilidades de cada etiqueta
-                fig, ax = plt.subplots(figsize=(8, 4))
-                
-                # Estilo moderno para el gráfico
-                bar_colors = ['#FF6B6B', '#F7D794', '#4CAF50']  # Colores para negativo, neutral, positivo
-                y_pos = np.arange(len(labels))  # Posiciones para las etiquetas
+                # Graficar con Seaborn
+                fig, ax = plt.subplots(figsize=(6, 4))
+                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette="coolwarm", ax=ax)
 
-                # Crear el gráfico de barras
-                bars = ax.barh(y_pos, scores, color=bar_colors, edgecolor='black', height=0.6)
+                # Añadir los valores sobre las barras
+                for index, value in enumerate(sentiment_df['Probability']):
+                    ax.text(value + 1, index, f'{value:.2f}%', va='center')
 
-                # Añadir los porcentajes sobre las barras
-                for i, (bar, score) in enumerate(zip(bars, scores)):
-                    ax.text(bar.get_width() + 0.01, bar.get_y() + bar.get_height() / 2, f'{score * 100:.2f}%', 
-                            va='center', ha='left', fontsize=12, color='black')
-
-                # Ajustar las etiquetas y título del gráfico
-                ax.set_yticks(y_pos)
-                ax.set_yticklabels(labels, fontsize=12)
-                ax.set_xlabel('Probability', fontsize=12)
-                ax.set_title('Sentiment Probabilities', fontsize=14, fontweight='bold')
-
-                # Quitar bordes superiores y laterales para un estilo más limpio
-                ax.spines['top'].set_visible(False)
-                ax.spines['right'].set_visible(False)
-
+                # Estilo del gráfico
+                ax.set_title("Sentiment Probabilities", fontsize=16, fontweight='bold')
+                ax.set_xlim(0, 100)  # Limitar el eje de las probabilidades a 100%
                 st.pyplot(fig)
 
             except Exception as e:
