@@ -23,10 +23,11 @@ def load_local_model():
     model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
 
     # Configurar el pipeline para usar GPU (device=0 para GPU)
-    return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1), tokenizer
+    sentiment_analysis = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
+    return sentiment_analysis, tokenizer
 
 # Cargar el modelo local
-model, tokenizer = load_local_model()
+sentiment_analysis, tokenizer = load_local_model()
 
 # Mapeo de etiquetas de RoBERTa a sentimientos comprensibles
 label_mapping = {
@@ -71,7 +72,7 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
             for chunk in chunks:
                 try:
                     # Usar el pipeline `sentiment_analysis` local
-                    response = model(chunk)
+                    response = sentiment_analysis(chunk)
 
                     # Encontrar la etiqueta con la puntuación más alta
                     for element in response:
