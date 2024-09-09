@@ -1,154 +1,188 @@
 import streamlit as st
 import pandas as pd
-import time
+import matplotlib.pyplot as plt
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import logging
 
-# Configuración de logging
+# Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Descargar y cargar el modelo y el tokenizador localmente
-@st.cache_resource  # Cachear el modelo para evitar recargarlo cada vez
+# Download and load the model and tokenizer locally
+@st.cache_resource
 def load_local_model():
     model_name = "cardiffnlp/twitter-roberta-base-sentiment"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
     return pipeline("sentiment-analysis", model=model, tokenizer=tokenizer)
 
-# Cargar el modelo localmente
+# Load the local model
 sentiment_analysis = load_local_model()
 
-# Función para analizar sentimientos en un DataFrame (CSV)
+# Function to analyze sentiments in a DataFrame (CSV)
 def analyze_sentiments_chunked(df, rate_limit_sleep=1.0):
     sentiment_list = []
     score_list = []
 
     for idx, text in enumerate(df['text']):
-        logging.info(f"Procesando comentario {idx + 1}/{len(df)}")
+        logging.info(f"Processing comment {idx + 1}/{len(df)}")
         try:
-            # Ejecutar el análisis de sentimientos
+            # Execute sentiment analysis
             result = sentiment_analysis(text)
-            # Obtener el sentimiento y el score
+            # Get the sentiment and score
             sentiment = result[0]['label']
             score = result[0]['score']
         except Exception as e:
-            logging.error(f"Error al procesar el texto: {e}")
+            logging.error(f"Error processing text: {e}")
             sentiment = "error"
             score = 0.0
 
         sentiment_list.append(sentiment)
         score_list.append(score)
-        time.sleep(rate_limit_sleep)  # Pausa entre cada análisis
+        time.sleep(rate_limit_sleep)  # Pause between each analysis
 
-    # Agregar los resultados al DataFrame
+    # Add the results to the DataFrame
     df['sentiment'] = sentiment_list
     df['score'] = score_list
     return df
 
-# CSS personalizado para el estilo
+# Function to calculate and display sentiment percentages
+def calculate_sentiment_percentages(df):
+    sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
+    sentiments = ['LABEL_0', 'LABEL_1', 'LABEL_2']  # LABEL_0: Negative, LABEL_1: Neutral, LABEL_2: Positive
+    percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
+    return percentages
+
+# CSS for a modern and clean look
 page_bg_css = '''
 <style>
 body {
-    background: #F5F5F5; /* Fondo más oscuro */
+    background: linear-gradient(135deg, #f5f7fa, #c3cfe2); /* Gradient background */
+    font-family: 'Helvetica Neue', sans-serif;
 }
 
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(to bottom, #FFB3B3, #FFFFFF, #B3C6FF);
-    background-size: cover;
-    background-attachment: fixed; /* Hace que el fondo sea dinámico */
+    background: linear-gradient(to bottom, #f5f7fa, #f5f7fa);
 }
 
-h1 {
-    color: #003366; /* Azul oscuro para el título */
+h1, h2, h3 {
+    color: #2C3E50; /* Dark blue */
+    font-weight: 700;
     text-align: center;
-    font-family: Arial, sans-serif;
-}
-
-p, div, span {
-    color: #000000; /* Negro para el resto de los textos */
+    margin-bottom: 15px;
 }
 
 .stButton>button {
-    background-color: #003366; /* Azul oscuro para el botón */
+    background-color: #2980B9; /* Vibrant blue */
     color: white;
-    border-radius: 5px;
-    padding: 10px;
-    border: 2px solid white;
-    font-size: 16px;
+    font-size: 18px;
+    border-radius: 12px; /* Rounded corners */
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* Soft shadow */
+}
+
+.stButton>button:hover {
+    background-color: #3498DB; /* Lighter blue on hover */
+    transform: scale(1.05); /* Subtle zoom effect */
 }
 
 .stTextArea textarea {
-    background-color: #f5f5f5; /* Fondo claro */
-    color: #000000; /* Texto negro */
+    background-color: #ECF0F1;
+    border-radius: 12px;
     font-size: 16px;
-    padding: 10px;
-    border-radius: 8px; /* Bordes redondeados */
-}
-
-.stPlotlyChart div {
-    border: 2px solid #003366; /* Borde azul oscuro para el gráfico */
-    border-radius: 15px; /* Bordes redondeados */
-    padding: 10px;
+    padding: 15px;
+    color: #2C3E50;
 }
 
 footer {
     visibility: hidden;
 }
+
+.result-card {
+    background-color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2980B9;
+    margin-bottom: 15px;
+}
 </style>
 '''
 
-# Inyectar el CSS personalizado en la aplicación
+# Inject CSS into the application
 st.markdown(page_bg_css, unsafe_allow_html=True)
 
-# Título de la aplicación
-st.title("Análisis de Sentimiento Local de Comentarios")
+# Title of the application
+st.title("✨ Sentiment Analysis")
 
-# Sección 1: Análisis de archivo CSV
-st.subheader("Análisis de archivo CSV")
-uploaded_file = st.file_uploader("Sube un archivo CSV con una columna llamada 'text'", type=["csv"])
+# Section 1: CSV File Analysis
+st.subheader("📂 Analyze CSV File")
+uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
 
-    # Mostrar los primeros registros del CSV
-    st.write("Primeros 5 comentarios del archivo:")
+    # Display the first few records of the CSV
+    st.write("First 5 comments from the file:")
     st.write(df.head())
 
-    # Botón para ejecutar el análisis de sentimientos
-    if st.button("Analizar Sentimientos CSV"):
+    # Button to execute sentiment analysis on the CSV
+    if st.button("🔍 Analyze Sentiments in CSV"):
         if 'text' not in df.columns:
-            st.error("El archivo CSV debe contener una columna llamada 'text'.")
+            st.error("The CSV file must contain a 'text' column.")
         else:
-            with st.spinner("Analizando los sentimientos, por favor espera..."):
+            with st.spinner("🔄 Analyzing sentiments, please wait..."):
                 analyzed_df = analyze_sentiments_chunked(df)
 
-            st.success("Análisis completado!")
+            st.success("✅ Analysis complete!")
 
-            # Mostrar los resultados
-            st.write("Resultados del análisis:")
+            # Display results
+            st.write("Analysis Results:")
             st.write(analyzed_df.head())
 
-            # Descargar los resultados como CSV
+            # Calculate and display sentiment percentages
+            percentages = calculate_sentiment_percentages(analyzed_df)
+            labels = ['Negative', 'Neutral', 'Positive']
+            colors = ['#FF6B6B', '#F7D794', '#4CAF50']  # Colors for negative, neutral, positive
+
+            # Create a bar chart
+            fig, ax = plt.subplots()
+            ax.barh(labels, percentages, color=colors)
+            ax.set_xlabel('Percentage (%)')
+            ax.set_title('Sentiment Distribution')
+            st.pyplot(fig)
+
+            # Download the results as a CSV
             csv = analyzed_df.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="Descargar resultados como CSV",
+                label="⬇️ Download results as CSV",
                 data=csv,
-                file_name='resultados_sentimientos.csv',
+                file_name='sentiment_analysis_results.csv',
                 mime='text/csv',
             )
 
-# Sección 2: Análisis de una frase individual
-st.subheader("Análisis de una frase individual")
-user_input = st.text_area("Escribe una frase para analizar", "")
+# Section 2: Individual Sentence Analysis
+st.subheader("📝 Analyze a Single Sentence")
+user_input = st.text_area("Write a sentence to analyze", "")
 
-if st.button("Analizar frase"):
+if st.button("📊 Analyze Sentence"):
     if user_input:
-        with st.spinner("Analizando la frase..."):
+        with st.spinner("🔄 Analyzing sentence..."):
             result = sentiment_analysis(user_input)
             sentiment = result[0]['label']
             score = result[0]['score']
-            st.write(f"**Sentimiento:** {sentiment}")
-            st.write(f"**Confianza:** {score:.2f}")
 
-
-
+            # Display results in a card
+            st.markdown(f"""
+            <div class="result-card">
+                <div class="card-header">Analysis Result:</div>
+                <p><strong>Sentiment:</strong> {sentiment}</p>
+                <p><strong>Confidence:</strong> {score:.2f}</p>
+            </div>
+            """, unsafe_allow_html=True)
