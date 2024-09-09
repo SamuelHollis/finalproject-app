@@ -82,9 +82,10 @@ h1 {
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
+    opacity: 0.8; /* Less transparent title (1 is fully opaque, lower values increase transparency) */
     background-color: rgba(255, 255, 255, 0.6); /* Semi-transparent white background */
-    padding: 10px;
-    border-radius: 10px; /* Rounded corners for better aesthetics */
+    padding: 8px;
+    border-radius: 8px; /* Rounded corners for better aesthetics */
 }
 
 h2, h3 {
