@@ -181,16 +181,21 @@ user_input = st.text_area("Write a sentence to analyze", "")
 if st.button("📊 Analyze Sentence"):
     if user_input:
         with st.spinner("🔄 Analyzing sentence..."):
-            result = sentiment_analysis(user_input)
-            sentiment = label_mapping[result[0]['label']]  # Map the label to a sentiment
-            score = result[0]['score']
+            try:
+                result = sentiment_analysis(user_input)
+                sentiment = label_mapping[result[0]['label']]  # Map the label to a sentiment
+                score = result[0]['score']
 
-            # Display results in a card
-            st.markdown(f"""
-            <div class="result-card">
-                <div class="card-header">Analysis Result:</div>
-                <p><strong>Sentiment:</strong> {sentiment}</p>
-                <p><strong>Confidence:</strong> {score:.2f}</p>
-            </div>
-            """, unsafe_allow_html=True)
+                # Display results in a card
+                st.markdown(f"""
+                <div class="result-card">
+                    <div class="card-header">Analysis Result:</div>
+                    <p><strong>Sentiment:</strong> {sentiment}</p>
+                    <p><strong>Confidence:</strong> {score:.2f}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+
 
