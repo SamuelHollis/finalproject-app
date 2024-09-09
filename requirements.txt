@@ -1,6 +1,5 @@
+streamlit
 transformers
-model
-utils
+torch
 pandas
 matplotlib
-seaborn
