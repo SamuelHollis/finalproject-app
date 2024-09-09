@@ -132,7 +132,8 @@ st.subheader("📂 Analyze CSV File")
 uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file, index=False)
+    # Cargar el archivo CSV sin incluir el índice como columna
+    df = pd.read_csv(uploaded_file, index_col=None)
 
     # Display the first few records of the CSV
     st.write("First 5 comments from the file:")
@@ -164,7 +165,7 @@ if uploaded_file is not None:
             ax.set_title('Sentiment Distribution')
             st.pyplot(fig)
 
-            # Download the results as a CSV
+            # Download the results as a CSV without an index
             csv = analyzed_df.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="⬇️ Download results as CSV",
