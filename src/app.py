@@ -84,8 +84,8 @@ h1 {
     margin-bottom: 15px;
     opacity: 0.9; /* Less transparent title (1 is fully opaque, lower values increase transparency) */
     background-color: rgba(255, 255, 255, 0.6); /* Semi-transparent white background */
-    padding: 20px;
-    border-radius: 20px; /* Rounded corners for better aesthetics */
+    padding: 4px;
+    border-radius: 4px; /* Rounded corners for better aesthetics */
 }
 
 h2, h3 {
