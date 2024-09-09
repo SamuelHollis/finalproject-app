@@ -67,7 +67,7 @@ body {
     background-position: center;
     background-repeat: no-repeat;
     font-family: 'Helvetica Neue', sans-serif;
-    opacity: 0.9; /* Slight opacity to blend the background */
+    opacity: 0.7; /* Slight opacity to blend the background */
 }
 
 [data-testid="stAppViewContainer"] {
