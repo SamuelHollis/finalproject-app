@@ -85,7 +85,7 @@ h2, h3 {
 }
 
 .stButton>button {
-    background-color: #2980B9; /* Vibrant blue */
+    background-color: #1E90FF; /* DodgerBlue */
     color: white;
     font-size: 18px;
     border-radius: 12px; /* Rounded corners */
