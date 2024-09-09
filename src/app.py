@@ -3,11 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import logging
-import numpy as np
 import torch
 import seaborn as sns
 import time
-import requests
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -45,20 +43,8 @@ def chunk_text(text, tokenizer, chunk_size=512):
         chunk_ids = input_ids[i:i + chunk_size]
         yield tokenizer.decode(chunk_ids, skip_special_tokens=True)
 
-# Variables de backoff
-initial_backoff = 5
-max_backoff = 300
-backoff_factor = 2
-
-def backoff_sleep(intento):
-    sleep_time = min(initial_backoff * (backoff_factor ** intento), max_backoff)
-    logging.info(f"Rate limit hit. Sleeping for {sleep_time} seconds...")
-    time.sleep(sleep_time)
-
-# Función para analizar en chunks y permitir la descarga de resultados como CSV
-def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512, process_chunk_size=5000):
-    intento = 0
-    processed_count = 0
+# Función para analizar en chunks usando el modelo local y permitir la descarga de resultados como CSV
+def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size=5000):
     ch_num = 0
 
     # Inicializar la barra de progreso
@@ -77,47 +63,34 @@ def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512, 
         st.write(f"Processing chunk n.{ch_num} of {total_chunks}...")
 
         for idx, text in enumerate(chunk_df['text']):
-            while True:
-                try:
-                    # Dividir en chunks
-                    chunks = list(chunk_text(text, tokenizer, chunk_size=chunk_size))
-                    break  # Salir del bucle si se procesan correctamente los chunks
-                except requests.exceptions.HTTPError as e:
-                    if e.response.status_code == 429:
-                        backoff_sleep(intento)
-                        intento += 1
-                        st.warning(f"Rate limit hit, retrying (attempt {intento})...")
-                    else:
-                        logging.error(f"Unknown issue: {e}")
-                        st.error(f"Error processing text: {e}")
-                        break
+            # Dividir en chunks
+            chunks = list(chunk_text(text, tokenizer, chunk_size=chunk_size))
 
-            # Análisis de sentimiento por chunks
+            # Análisis de sentimiento por chunks usando el pipeline local
             overall_sentiment = None
             max_score = -1  # Inicializar para que cualquier puntuación sea más alta
             for chunk in chunks:
                 try:
-                    # Usar el pipeline `sentiment_analysis` que está cargado localmente
+                    # Usar el pipeline `sentiment_analysis` local
                     response = sentiment_analysis(chunk)
+
+                    # Encontrar la etiqueta con la puntuación más alta
+                    for element in response:
+                        if element['score'] > max_score:
+                            max_score = element['score']
+                            overall_sentiment = element['label']
+
                 except Exception as e:
                     logging.error(f"Unexpected error: {e}")
                     st.error(f"Unexpected error: {e}")
                     continue
 
-                # Encontrar la etiqueta con la puntuación más alta
-                for element in response:
-                    if element['score'] > max_score:
-                        max_score = element['score']
-                        overall_sentiment = element['label']
-
             sentiment_list.append(overall_sentiment)
             score_list.append(max_score)
-            time.sleep(rate_limit_sleep)  # Pausa entre peticiones para evitar el límite
 
         # Asignar los resultados al chunk procesado
         df.loc[start:end-1, 'sentiment'] = sentiment_list
         df.loc[start:end-1, 'score'] = score_list
-        processed_count += len(chunk_df)
 
         # Actualizar barra de progreso
         progress_percentage = (ch_num / total_chunks)
@@ -139,7 +112,6 @@ def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512, 
         file_name='sentiment_analysis_results.csv',
         mime='text/csv',
     )
-
 # CSS for a modern and clean look
 page_bg_css = '''
 <style>
