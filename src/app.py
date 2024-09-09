@@ -62,12 +62,12 @@ def calculate_sentiment_percentages(df):
 page_bg_css = '''
 <style>
 body {
-    background: #4a4a4a; /* Soft gray background */
+    background: #778899; /* Soft gray background */
     font-family: 'Helvetica Neue', sans-serif;
 }
 
 [data-testid="stAppViewContainer"] {
-    background: #4a4a4a; /* Soft gray background */
+    background: #778899; /* Soft gray background */
 }
 
 h1 {
