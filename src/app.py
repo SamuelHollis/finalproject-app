@@ -112,6 +112,17 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
         file_name='sentiment_analysis_results.csv',
         mime='text/csv',
     )
+
+# Función para calcular y mostrar los porcentajes de sentimiento
+def calculate_sentiment_percentages(df):
+    # Contar la frecuencia de cada sentimiento
+    sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
+    sentiments = ['LABEL_0', 'LABEL_1', 'LABEL_2']  # LABEL_0: Negative, LABEL_1: Neutral, LABEL_2: Positive
+    
+    # Crear una lista con los porcentajes de cada sentimiento
+    percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
+    return percentages
+
 # CSS for a modern and clean look
 page_bg_css = '''
 <style>
@@ -226,7 +237,7 @@ if uploaded_file is not None:
                 rate_limit_sleep = 1  # Puedes ajustar este valor según tu necesidad
                 
                 # Llamar a la función con todos los parámetros requeridos
-                analyzed_df = analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, chunk_size=512, process_chunk_size=5000)
+                analyzed_df = analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size=5000)
 
             st.success("✅ Analysis complete!")
 
