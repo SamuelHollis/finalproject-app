@@ -6,16 +6,16 @@ from transformers import pipeline, AutoModelForSequenceClassification, AutoToken
 import torch
 
 # Logging configuration
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+#logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Verificar si la GPU está disponible
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    st.success(f"GPU disponible: {torch.cuda.get_device_name(0)}")
-else:
-    device = torch.device("cpu")
-    st.warning("GPU no disponible, usando CPU")
-    
+#if torch.cuda.is_available():
+#    device = torch.device("cuda")
+#    st.success(f"GPU disponible: {torch.cuda.get_device_name(0)}")
+#else:
+#    device = torch.device("cpu")
+#    st.warning("GPU no disponible, usando CPU")
+
 # Cargar el modelo y tokenizador localmente
 @st.cache_resource
 def load_local_model():
