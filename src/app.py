@@ -132,7 +132,7 @@ st.subheader("📂 Analyze CSV File")
 uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+    df = pd.read_csv(uploaded_file, index=False)
 
     # Display the first few records of the CSV
     st.write("First 5 comments from the file:")
