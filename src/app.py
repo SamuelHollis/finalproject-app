@@ -62,12 +62,18 @@ def calculate_sentiment_percentages(df):
 page_bg_css = '''
 <style>
 body {
-    background: #778899; /* Soft gray background */
+    background: url("https://link-to-your-image.com/image.jpg"); /* Background image */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     font-family: 'Helvetica Neue', sans-serif;
+    opacity: 0.9; /* Slight opacity to blend the background */
 }
 
 [data-testid="stAppViewContainer"] {
-    background: #778899; /* Soft gray background */
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay for readability */
+    background-blend-mode: overlay;
+    padding: 2rem;
 }
 
 h1 {
@@ -112,7 +118,7 @@ footer {
 }
 
 .result-card {
-    background-color: #6B6B6B; /* Dark gray for the result cards */
+    background-color: rgba(107, 107, 107, 0.7); /* Slightly transparent dark gray for the result cards */
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
