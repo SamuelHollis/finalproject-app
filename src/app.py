@@ -110,24 +110,15 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
 
     return df
 
-# Sección 1: Análisis de archivo CSV
-st.subheader("📂 Analyze CSV File")
-uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
-
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file, index_col=None)
-    st.write("First 5 comments from the file:")
-    st.write(df.head())
-
-    if st.button("🔍 Analyze Sentiments in CSV"):
-        if 'text' not in df.columns:
-            st.error("The CSV file must contain a 'text' column.")
-        else:
-            with st.spinner("🔄 Analyzing sentiments, please wait..."):
-                analyzed_df = analyze_sentiments_chunked(df, tokenizer, chunk_size=512)
-
-            st.write("Analysis Results:")
-            st.write(analyzed_df.head())
+# Función para calcular y mostrar los porcentajes de sentimiento
+def calculate_sentiment_percentages(df):
+    # Contar la frecuencia de cada sentimiento
+    sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
+    sentiments = ['LABEL_0', 'LABEL_1', 'LABEL_2']  # LABEL_0: Negative, LABEL_1: Neutral, LABEL_2: Positive
+    
+    # Crear una lista con los porcentajes de cada sentimiento
+    percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
+    return percentages
 
 # Inyección del CSS en la aplicación
 page_bg_css = '''
