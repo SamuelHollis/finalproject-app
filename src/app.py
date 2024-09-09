@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import logging
+import numpy as np
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -227,10 +228,30 @@ if st.button("📊 Analyze Sentence"):
                 """, unsafe_allow_html=True)
 
                 # Graficar las probabilidades de cada etiqueta
-                fig, ax = plt.subplots()
-                ax.barh(labels, scores, color=['#FF6B6B', '#F7D794', '#4CAF50'])
-                ax.set_xlabel('Probability')
-                ax.set_title('Sentiment Probabilities')
+                fig, ax = plt.subplots(figsize=(8, 4))
+                
+                # Estilo moderno para el gráfico
+                bar_colors = ['#FF6B6B', '#F7D794', '#4CAF50']  # Colores para negativo, neutral, positivo
+                y_pos = np.arange(len(labels))  # Posiciones para las etiquetas
+
+                # Crear el gráfico de barras
+                bars = ax.barh(y_pos, scores, color=bar_colors, edgecolor='black', height=0.6)
+
+                # Añadir los porcentajes sobre las barras
+                for i, (bar, score) in enumerate(zip(bars, scores)):
+                    ax.text(bar.get_width() + 0.01, bar.get_y() + bar.get_height() / 2, f'{score * 100:.2f}%', 
+                            va='center', ha='left', fontsize=12, color='black')
+
+                # Ajustar las etiquetas y título del gráfico
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(labels, fontsize=12)
+                ax.set_xlabel('Probability', fontsize=12)
+                ax.set_title('Sentiment Probabilities', fontsize=14, fontweight='bold')
+
+                # Quitar bordes superiores y laterales para un estilo más limpio
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+
                 st.pyplot(fig)
 
             except Exception as e:
