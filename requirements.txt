@@ -4,4 +4,4 @@ torch
 pandas
 matplotlib
 seaborn
-dotenv
+python-dotenv
