@@ -8,14 +8,8 @@ import torch
 # Verificar si la GPU está disponible
 if torch.cuda.is_available():
     device = torch.device("cuda")
-    print(f"GPU activada: {torch.cuda.get_device_name(0)}")
 else:
     raise SystemError("GPU no disponible. Por favor, verifica tu configuración de CUDA.")
-
-# Aquí mueves cualquier tensor o modelo a la GPU
-# Ejemplo de un tensor en GPU:
-tensor = torch.randn(5, 3).to(device)
-print(f"Tensor creado en: {device}")
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
