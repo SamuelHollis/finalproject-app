@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import torch
 import seaborn as sns
+import requests 
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -70,7 +71,7 @@ def guardar_progreso(df):
         except Exception as e:
             logging.error(f"Ha habido un error al guardar el progreso: {e}")
             logging.info(f"{len(df)} instancias no guardadas")
-            
+
 # Función para analizar en chunks y permitir la descarga de resultados como CSV
 def analyze_sentiments_chunked(df, tokenizer, rate_limit_sleep, client, chunk_size=512, process_chunk_size=5000):
     intento = 0
