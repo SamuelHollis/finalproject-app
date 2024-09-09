@@ -71,7 +71,7 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
             for chunk in chunks:
                 try:
                     # Usar el pipeline `sentiment_analysis` local
-                    response = sentiment_analysis(chunk)
+                    response = model(chunk)
 
                     # Encontrar la etiqueta con la puntuación más alta
                     for element in response:
