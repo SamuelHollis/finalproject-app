@@ -5,9 +5,20 @@ from utils import visualize_sentiment_distribution, process_comments
 # CSS personalizado para el fondo con gradiente en tonos pastel
 page_bg_img = '''
 <style>
-body {
+[data-testid="stAppViewContainer"] {
     background: linear-gradient(to bottom, #FFB3B3, #FFFFFF, #B3C6FF);
     background-size: cover;
+}
+
+[data-testid="stHeader"] {
+    background: rgba(0, 0, 0, 0);
+}
+
+[data-testid="stToolbar"] {
+    right: 2rem;
+}
+
+body {
     color: black;
 }
 
