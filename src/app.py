@@ -1,16 +1,14 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import logging
-import torch
-import seaborn as sns
 import time
+from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
+import torch
 
-# Configuración de logging
+# Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Descargar y cargar el modelo y tokenizador localmente
+# Cargar el modelo y tokenizador localmente
 @st.cache_resource
 def load_local_model():
     model_name = "cardiffnlp/twitter-roberta-base-sentiment"
@@ -22,14 +20,14 @@ def load_local_model():
     # Cargar el modelo y moverlo a la GPU si está disponible
     model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
 
-    # Configurar el pipeline para usar GPU (device=0 para GPU)
+    # Configurar el pipeline para usar GPU
     sentiment_analysis = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
     return sentiment_analysis, tokenizer
 
 # Cargar el modelo local
 sentiment_analysis, tokenizer = load_local_model()
 
-# Mapeo de etiquetas de RoBERTa a sentimientos comprensibles
+# Mapeo de etiquetas
 label_mapping = {
     'LABEL_0': 'Negative',
     'LABEL_1': 'Neutral',
@@ -44,45 +42,41 @@ def chunk_text(text, tokenizer, chunk_size=512):
         chunk_ids = input_ids[i:i + chunk_size]
         yield tokenizer.decode(chunk_ids, skip_special_tokens=True)
 
-# Función para analizar en chunks usando el modelo local y permitir la descarga de resultados como CSV
+# Función para analizar los sentimientos en chunks y actualizar la barra de progreso
 def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size=5000):
     ch_num = 0
-
-    # Inicializar la barra de progreso y el mensaje de estado
     total_chunks = len(df) // process_chunk_size + (1 if len(df) % process_chunk_size > 0 else 0)
+
+    # Inicializar la barra de progreso y el texto de progreso
     progress_bar = st.progress(0)
     progress_text = st.empty()
-    progress_text.text("Analyzing...")  # Texto que muestra el estado de análisis
 
-    # Procesar el dataframe en chunks de `process_chunk_size`
+    # Procesar el DataFrame en chunks
     for start in range(0, len(df), process_chunk_size):
         ch_num += 1
         end = min(start + process_chunk_size, len(df))
         chunk_df = df.iloc[start:end]
         sentiment_list = []
         score_list = []
+        logging.info(f"Processing chunk {ch_num} of {total_chunks}")
+        st.write(f"Processing chunk {ch_num} of {total_chunks}...")  # Mostrar mensaje en la interfaz
 
         for idx, text in enumerate(chunk_df['text']):
-            # Dividir en chunks
             chunks = list(chunk_text(text, tokenizer, chunk_size=chunk_size))
-
-            # Análisis de sentimiento por chunks usando el pipeline local
             overall_sentiment = None
-            max_score = -1  # Inicializar para que cualquier puntuación sea más alta
+            max_score = -1
+
             for chunk in chunks:
                 try:
-                    # Usar el pipeline `sentiment_analysis` local
                     response = sentiment_analysis(chunk)
-
                     # Encontrar la etiqueta con la puntuación más alta
                     for element in response:
                         if element['score'] > max_score:
                             max_score = element['score']
                             overall_sentiment = element['label']
-
                 except Exception as e:
-                    logging.error(f"Unexpected error: {e}")
-                    st.error(f"Unexpected error: {e}")
+                    logging.error(f"Error in sentiment analysis: {e}")
+                    st.error(f"Error in sentiment analysis: {e}")
                     continue
 
             sentiment_list.append(overall_sentiment)
@@ -92,19 +86,21 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
         df.loc[start:end-1, 'sentiment'] = sentiment_list
         df.loc[start:end-1, 'score'] = score_list
 
-        # Actualizar barra de progreso
-        progress_percentage = (ch_num / total_chunks)
+        # Actualizar barra de progreso y texto
+        progress_percentage = ch_num / total_chunks
         progress_bar.progress(progress_percentage)
+        progress_text.text(f"Processed {ch_num} of {total_chunks} chunks")
+
+        # Añadir una pequeña pausa para no sobrecargar la CPU
+        time.sleep(0.1)
 
     # Completar la barra de progreso
     progress_bar.progress(1.0)
-    progress_text.text("Analysis Complete!")
+    progress_text.text("Analysis complete!")
     st.success("Sentiment analysis complete!")
 
-    # Convertir el DataFrame en CSV
+    # Convertir el DataFrame en CSV y permitir la descarga
     csv = df.to_csv(index=False).encode('utf-8')
-
-    # Añadir botón para descargar el archivo CSV
     st.download_button(
         label="⬇️ Download results as CSV",
         data=csv,
@@ -112,15 +108,26 @@ def analyze_sentiments_chunked(df, tokenizer, chunk_size=512, process_chunk_size
         mime='text/csv',
     )
 
-# Función para calcular y mostrar los porcentajes de sentimiento
-def calculate_sentiment_percentages(df):
-    # Contar la frecuencia de cada sentimiento
-    sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
-    sentiments = ['LABEL_0', 'LABEL_1', 'LABEL_2']  # LABEL_0: Negative, LABEL_1: Neutral, LABEL_2: Positive
-    
-    # Crear una lista con los porcentajes de cada sentimiento
-    percentages = [sentiment_counts.get(sentiment, 0) for sentiment in sentiments]
-    return percentages
+    return df
+
+# Sección 1: Análisis de archivo CSV
+st.subheader("📂 Analyze CSV File")
+uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
+
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file, index_col=None)
+    st.write("First 5 comments from the file:")
+    st.write(df.head())
+
+    if st.button("🔍 Analyze Sentiments in CSV"):
+        if 'text' not in df.columns:
+            st.error("The CSV file must contain a 'text' column.")
+        else:
+            with st.spinner("🔄 Analyzing sentiments, please wait..."):
+                analyzed_df = analyze_sentiments_chunked(df, tokenizer, chunk_size=512)
+
+            st.write("Analysis Results:")
+            st.write(analyzed_df.head())
 
 # Inyección del CSS en la aplicación
 page_bg_css = '''
