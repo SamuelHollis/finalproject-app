@@ -86,13 +86,15 @@ def calculate_sentiment_percentages(df):
     sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
     return [sentiment_counts.get('Negative', 0), sentiment_counts.get('Neutral', 0), sentiment_counts.get('Positive', 0)]
 
-# CSS para mejorar el aspecto
+import streamlit as st
+
+# Definimos el CSS personalizado para el fondo y los estilos de los componentes
 page_bg_css = '''
 <style>
 body {
     background: url("https://www.omfif.org/wp-content/uploads/2024/01/GettyImages-1183053829.jpg");
     background-size: cover;
-    background-position: cover;
+    background-position: center;
     background-repeat: no-repeat;
     font-family: 'Helvetica Neue', sans-serif;
     opacity: 0.7;
@@ -108,7 +110,6 @@ h1 {
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
-    opacity: 1;
     background-color: rgba(255, 255, 255, 0.5);
     padding: 4px;
     border-radius: 10px;
@@ -136,17 +137,24 @@ h2, h3 {
     transform: scale(1.05);
 }
 .stTextArea textarea {
-    background-color: rgba(107, 107, 107, 0.9);
+    background-color: rgba(0, 0, 0, 0.7);  /* Fondo negro con transparencia */
     border-radius: 12px;
     font-size: 16px;
     padding: 15px;
-    color: white;
+    color: white;  /* Texto blanco */
+}
+.stTextInput input {
+    background-color: rgba(0, 0, 0, 0.7);  /* Fondo negro con transparencia para inputs de texto */
+    border-radius: 12px;
+    font-size: 16px;
+    padding: 10px;
+    color: white;  /* Texto blanco */
 }
 footer {
     visibility: hidden;
 }
 .result-card {
-    background-color: rgba(107, 107, 107, 0.8);
+    background-color: rgba(0, 0, 0, 0.7);  /* Fondo negro con transparencia */
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
@@ -161,6 +169,22 @@ footer {
 }
 </style>
 '''
+
+# Aplicamos el CSS personalizado
+st.markdown(page_bg_css, unsafe_allow_html=True)
+
+# Ejemplo de contenido en la app
+st.title("Título de Ejemplo")
+st.header("Subtítulo de Ejemplo")
+st.text_area("Ingrese su texto aquí")
+
+# Botón de ejemplo
+if st.button("Haga clic aquí"):
+    st.write("¡Botón presionado!")
+
+# Tarjeta de ejemplo con estilo personalizado
+st.markdown('<div class="result-card"><div class="card-header">Resultado</div>Contenido de ejemplo en una tarjeta estilizada.</div>', unsafe_allow_html=True)
+
 
 # Inyectar CSS
 st.markdown(page_bg_css, unsafe_allow_html=True)
