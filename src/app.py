@@ -226,10 +226,10 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                 """, unsafe_allow_html=True)
                 
                 # Configurar tema de Seaborn
-                sns.set(style="whitegrid", font_scale=1.2)
+                sns.set_theme(style="whitegrid", font_scale=1.2)
                 
                 # Crear una paleta personalizada
-                colors = sns.color_palette("coolwarm", as_cmap=True)
+                colors = sns.color_palette("icefire")
 
                 # Crear el gráfico con barras horizontales
                 fig, ax = plt.subplots(figsize=(7, 4))
