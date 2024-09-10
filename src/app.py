@@ -178,7 +178,7 @@ footer {
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
     color: white;
 }
 .card-header {
@@ -237,7 +237,7 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                 fig, ax = plt.subplots(figsize=(7, 4))
 
                 # Cambiar la opacidad de las barras y usar una paleta de colores
-                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette=colors, ax=ax, alpha=1)  # alpha controla la opacidad
+                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette=colors, ax=ax, alpha=1.3)  # alpha controla la opacidad
 
                 # Añadir los valores sobre las barras
                 for index, value in enumerate(sentiment_df['Probability']):
