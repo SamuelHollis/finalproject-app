@@ -136,7 +136,7 @@ h2, h3 {
     transform: scale(1.05);
 }
 .stTextArea textarea {
-    background-color: rgba(75, 75, 75, 0.9);
+    background-color: rgba(40, 40, 40, 0.9);
     border-radius: 12px;
     font-size: 16px;
     padding: 15px;
@@ -146,7 +146,7 @@ footer {
     visibility: hidden;
 }
 .result-card {
-    background-color: rgba(75, 75, 75, 0.8);
+    background-color: rgba(40, 40, 40, 0.9);
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
