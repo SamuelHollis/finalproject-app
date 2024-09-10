@@ -2,10 +2,12 @@ import streamlit as st
 import pandas as pd
 import logging
 import time
+import numpy as np
 from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.special import softmax
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -22,43 +24,58 @@ def load_local_model():
     # Cargar el modelo y moverlo a la GPU si está disponible
     model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
 
-    # Configurar el pipeline para usar GPU
-    sentiment_analysis = pipeline("sentiment-analysis", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
-    return sentiment_analysis, tokenizer
+    return model, tokenizer
 
 # Cargar el modelo local
-sentiment_analysis, tokenizer = load_local_model()
+model, tokenizer = load_local_model()
 
 # Mapeo de etiquetas
-label_mapping = {
-    'LABEL_0': 'Negative',
-    'LABEL_1': 'Neutral',
-    'LABEL_2': 'Positive'
-}
+label_mapping = ['Negative', 'Neutral', 'Positive']
+
+# Preprocesar texto
+def preprocess(text):
+    new_text = []
+    for t in text.split(" "):
+        t = '@user' if t.startswith('@') and len(t) > 1 else t
+        t = 'http' if t.startswith('http') else t
+        new_text.append(t)
+    return " ".join(new_text)
+
+# Función para obtener los scores de cada etiqueta (Negative, Neutral, Positive)
+def get_sentiment_scores(text):
+    text = preprocess(text)
+    encoded_input = tokenizer(text, return_tensors='pt')
+    output = model(**encoded_input)
+    scores = output[0][0].detach().numpy()
+    scores = softmax(scores)  # Aplicar softmax para obtener las probabilidades
+    return scores
 
 # Función para analizar los sentimientos de un archivo CSV y actualizar la barra de progreso
-def analyze_sentiments_csv(df, chunk_size=512, process_chunk_size=5000):
+def analyze_sentiments_csv(df):
     total_chunks = len(df)
     progress_bar = st.progress(0)
     progress_text = st.empty()
 
     sentiments = []
-    scores = []
+    negative_scores = []
+    neutral_scores = []
+    positive_scores = []
 
     for idx, row in df.iterrows():
         text = row['text']
-        # Análisis de sentimiento con el pipeline cargado
+        # Obtener los scores de cada sentimiento
         try:
-            response = sentiment_analysis(text)
-            sentiment = label_mapping[response[0]['label']]
-            score = response[0]['score']
+            scores = get_sentiment_scores(text)
+            sentiments.append(label_mapping[np.argmax(scores)])  # El sentimiento con mayor puntuación
+            negative_scores.append(scores[0])
+            neutral_scores.append(scores[1])
+            positive_scores.append(scores[2])
         except Exception as e:
             st.error(f"Error during sentiment analysis: {e}")
-            sentiment = "error"
-            score = 0.0
-
-        sentiments.append(sentiment)
-        scores.append(score)
+            sentiments.append("error")
+            negative_scores.append(0)
+            neutral_scores.append(0)
+            positive_scores.append(0)
 
         # Actualizar barra de progreso
         progress_percentage = (idx + 1) / total_chunks
@@ -66,7 +83,9 @@ def analyze_sentiments_csv(df, chunk_size=512, process_chunk_size=5000):
         progress_text.text(f"Processing {idx + 1} of {total_chunks}")
 
     df['sentiment'] = sentiments
-    df['score'] = scores
+    df['negative_score'] = negative_scores
+    df['neutral_score'] = neutral_scores
+    df['positive_score'] = positive_scores
 
     # Completar la barra de progreso
     progress_bar.progress(1.0)
@@ -180,23 +199,18 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
     if user_input:  # Si el usuario ha ingresado texto
         with st.spinner("🔄 Analyzing sentence..."):
             try:
-                # Obtener los resultados completos de cada etiqueta
-                result = sentiment_analysis(user_input)
-
-                # Crear listas para las etiquetas y las puntuaciones
-                labels = [label_mapping[res['label']] for res in result]
-                scores = [res['score'] for res in result]
-
-                # Crear un DataFrame con las etiquetas y sus probabilidades
+                # Obtener los scores completos de cada etiqueta
+                scores = get_sentiment_scores(user_input)
+                
+                # Crear DataFrame con los scores
                 sentiment_df = pd.DataFrame({
-                    'Sentiment': labels,
+                    'Sentiment': label_mapping,
                     'Probability': [score * 100 for score in scores]  # Convertir a porcentaje
                 })
 
                 # Mostrar el resultado del análisis principal
-                max_index = scores.index(max(scores))
-                sentiment = labels[max_index]
-                confidence = scores[max_index]
+                sentiment = label_mapping[np.argmax(scores)]
+                confidence = max(scores) * 100
 
                 st.markdown(f"""
                 <div class="result-card">
