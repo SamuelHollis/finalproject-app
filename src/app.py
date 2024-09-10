@@ -235,7 +235,7 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                 fig, ax = plt.subplots(figsize=(7, 4))
 
                 # Cambiar la opacidad de las barras y usar una paleta de colores
-                sns.barplot(x="Sentiment", y="Probability", data=sentiment_df, palette=colors, ax=ax, alpha=1)  # alpha controla la opacidad
+                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette=colors, ax=ax, alpha=1)  # alpha controla la opacidad
 
                 # Añadir los valores sobre las barras
                 for index, value in enumerate(sentiment_df['Probability']):
