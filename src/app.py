@@ -168,7 +168,59 @@ st.markdown(page_bg_css, unsafe_allow_html=True)
 # Título de la aplicación
 st.title("Sentiment Analysis")
 
-# Sección 1: Análisis de archivo CSV
+# Section 1: Individual Sentence Analysis
+st.subheader("📝 Analyze a Single Sentence")
+
+# Campo para que el usuario ingrese una oración
+user_input = st.text_area("Write a sentence to analyze", "", key="single_sentence_input")
+
+if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
+    if user_input:  # Si el usuario ha ingresado texto
+        with st.spinner("🔄 Analyzing sentence..."):
+            try:
+                # Obtener los resultados completos de cada etiqueta
+                result = sentiment_analysis(user_input)
+
+                # Crear listas para las etiquetas y las puntuaciones
+                labels = [label_mapping[res['label']] for res in result]
+                scores = [res['score'] for res in result]
+
+                # Crear un DataFrame con las etiquetas y sus probabilidades
+                sentiment_df = pd.DataFrame({
+                    'Sentiment': labels,
+                    'Probability': [score * 100 for score in scores]  # Convertir a porcentaje
+                })
+
+                # Mostrar el resultado del análisis principal
+                max_index = scores.index(max(scores))
+                sentiment = labels[max_index]
+                confidence = scores[max_index]
+
+                st.markdown(f"""
+                <div class="result-card">
+                    <div class="card-header">Analysis Result:</div>
+                    <p><strong>Sentiment:</strong> {sentiment}</p>
+                    <p><strong>Confidence:</strong> {confidence:.2f}%</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Graficar con Seaborn
+                fig, ax = plt.subplots(figsize=(6, 4))
+                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette="coolwarm", ax=ax)
+
+                # Añadir los valores sobre las barras
+                for index, value in enumerate(sentiment_df['Probability']):
+                    ax.text(value + 1, index, f'{value:.2f}%', va='center')
+
+                # Estilo del gráfico
+                ax.set_title("Sentiment Probabilities", fontsize=16, fontweight='bold')
+                ax.set_xlim(0, 100)  # Limitar el eje de las probabilidades a 100%
+                st.pyplot(fig)
+
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+
+# Sección 2: Análisis de archivo CSV
 st.subheader("📂 Analyze CSV File")
 uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
 
