@@ -136,7 +136,7 @@ h1 {
     text-align: center;
     margin-bottom: 15px;
     opacity: 1.2;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(21, 125, 255, 0.3);
     padding: 10px;
     border-radius: 10px;
     width: 100%;
