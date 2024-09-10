@@ -8,6 +8,7 @@ import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.special import softmax
+from matplotlib.patches import FancyBboxPatch
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
