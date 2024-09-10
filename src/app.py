@@ -239,9 +239,18 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                     ax.text(value + 1, index, f'{value:.2f}%', va='center')
 
                 # Estilo del gráfico
-                ax.set_title("Sentiment Probabilities", fontsize=16, fontweight='bold')
+                ax.set_title("Sentiment Probabilities", fontsize=16, fontweight='bold', color="#333")
                 ax.set_xlim(0, 100)  # Limitar el eje de las probabilidades a 100%
+                ax.set_xlabel("Probability (%)", fontsize=12, fontweight='bold')
+                ax.set_ylabel("Sentiment", fontsize=12, fontweight='bold')
+
+                # Añadir un borde suave al gráfico y mejorar su presentación
+                sns.despine(left=True, bottom=True)
+                plt.tight_layout()
+
+                # Mostrar el gráfico en Streamlit
                 st.pyplot(fig)
+
 
             except Exception as e:
                 st.error(f"An error occurred: {e}")
