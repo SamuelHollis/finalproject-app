@@ -112,7 +112,7 @@ def calculate_sentiment_percentages(df):
     sentiment_counts = df['sentiment'].value_counts(normalize=True) * 100
     return [sentiment_counts.get('Negative', 0), sentiment_counts.get('Neutral', 0), sentiment_counts.get('Positive', 0)]
 
-# CSS para mejorar el aspecto general, incluido el título
+# CSS para mejorar el aspecto general, incluido el título centrado
 page_bg_css = '''
 <style>
 body {
@@ -138,11 +138,10 @@ h1.title {
     padding: 10px;
     border-radius: 10px; /* Bordes redondeados */
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra suave */
+    width: 100%; /* Ocupar todo el ancho disponible */
     max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto; /* Asegura el centrado perfecto */
     margin-bottom: 20px;
-    display: block;  /* Asegura que sea un bloque centrado */
 }
 h2, h3 {
     color: white;
