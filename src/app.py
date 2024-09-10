@@ -108,7 +108,7 @@ h1 {
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
-    opacity: 1;
+    opacity: 1.2;
     background-color: rgba(150, 150, 150, 0.4);
     padding: 4px;
     border-radius: 10px;
