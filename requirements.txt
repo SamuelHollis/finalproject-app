@@ -7,4 +7,5 @@ python-dotenv
 numpy
 requests
 scipy
+torch
 
