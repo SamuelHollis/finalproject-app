@@ -191,7 +191,7 @@ footer {
 st.markdown(page_bg_css, unsafe_allow_html=True)
 
 # Título de la aplicación
-st.title("Sentiment Analysis")
+st.title("SENTIMENT ANALYSIS")
 
 # Section 1: Individual Sentence Analysis
 st.subheader("📝 Analyze a Single Sentence")
@@ -230,19 +230,25 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                 # Crear una paleta personalizada
                 colors = sns.color_palette("coolwarm", as_cmap=True)
 
-                # Graficar con Seaborn
-                fig, ax = plt.subplots(figsize=(6, 4))
-                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette="coolwarm", ax=ax)
+                # Crear el gráfico con barras horizontales
+                fig, ax = plt.subplots(figsize=(7, 4))
+
+                # Cambiar la opacidad de las barras y usar una paleta de colores
+                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette=colors, ax=ax, alpha=0.8)  # alpha controla la opacidad
 
                 # Añadir los valores sobre las barras
                 for index, value in enumerate(sentiment_df['Probability']):
-                    ax.text(value + 1, index, f'{value:.2f}%', va='center')
+                    ax.text(value + 1, index, f'{value:.2f}%', va='center', fontweight='bold', fontsize=11)
 
                 # Estilo del gráfico
                 ax.set_title("Sentiment Probabilities", fontsize=16, fontweight='bold', color="#333")
                 ax.set_xlim(0, 100)  # Limitar el eje de las probabilidades a 100%
                 ax.set_xlabel("Probability (%)", fontsize=12, fontweight='bold')
                 ax.set_ylabel("Sentiment", fontsize=12, fontweight='bold')
+
+                # Añadir un borde redondeado al gráfico
+                bbox = FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0.05", linewidth=2, edgecolor="black", facecolor='none', transform=ax.transAxes)
+                ax.add_patch(bbox)
 
                 # Añadir un borde suave al gráfico y mejorar su presentación
                 sns.despine(left=True, bottom=True)
