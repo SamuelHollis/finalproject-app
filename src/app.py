@@ -140,7 +140,7 @@ h2, h3 {
     border-radius: 12px;
     font-size: 16px;
     padding: 15px;
-    color: white;
+    color: black;
 }
 footer {
     visibility: hidden;
