@@ -150,7 +150,7 @@ footer {
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     color: white;
 }
 .card-header {
