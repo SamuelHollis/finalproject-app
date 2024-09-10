@@ -23,7 +23,7 @@ def load_local_model():
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Intentar cargar el modelo y moverlo a la GPU si está disponible
-        model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
+        model = AutoModelForSequenceClassification.from_pretrained(model_name).to('cpu')
 
         return model, tokenizer
 
