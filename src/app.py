@@ -13,18 +13,22 @@ from scipy.special import softmax
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Cargar el modelo y tokenizador localmente
-@st.cache_resource
 def load_local_model():
-    model_name = "cardiffnlp/twitter-roberta-base-sentiment"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    try:
+        model_name = "cardiffnlp/twitter-roberta-base-sentiment"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    # Detectar si CUDA está disponible
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Detectar si CUDA está disponible
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Cargar el modelo y moverlo a la GPU si está disponible
-    model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
+        # Intentar cargar el modelo y moverlo a la GPU si está disponible
+        model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
 
-    return model, tokenizer
+        return model, tokenizer
+
+    except ImportError as e:
+        st.error(f"Error importing required backend: {e}")
+        st.stop()
 
 # Cargar el modelo local
 model, tokenizer = load_local_model()
