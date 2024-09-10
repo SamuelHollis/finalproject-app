@@ -109,7 +109,7 @@ h1 {
     text-align: center;
     margin-bottom: 15px;
     opacity: 1;
-    background-color: rgba(150, 150, 150, 0.7);
+    background-color: rgba(150, 150, 150, 0.4);
     padding: 4px;
     border-radius: 10px;
     max-width: 500px;
