@@ -132,7 +132,7 @@ body {
 h1.title {
     font-size: 45px;
     font-weight: 900;
-    text-align: center;
+    text-align: center;  /* Centrando el texto */
     color: #FF5733; /* Cambia el color aquí */
     background-color: rgba(255, 255, 255, 0.2); /* Fondo semitransparente */
     padding: 10px;
@@ -142,6 +142,7 @@ h1.title {
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 20px;
+    display: block;  /* Asegura que sea un bloque centrado */
 }
 h2, h3 {
     color: white;
