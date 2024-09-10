@@ -223,6 +223,12 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                     <p><strong>Confidence:</strong> {confidence:.2f}%</p>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                # Configurar tema de Seaborn
+                sns.set(style="whitegrid", font_scale=1.2)
+                
+                # Crear una paleta personalizada
+                colors = sns.color_palette("coolwarm", as_cmap=True)
 
                 # Graficar con Seaborn
                 fig, ax = plt.subplots(figsize=(6, 4))
