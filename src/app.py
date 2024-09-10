@@ -104,7 +104,7 @@ body {
     color: white;
 }
 h1 {
-    color: #B22222;
+    color: #000080;
     font-weight: 700;
     text-align: center;
     margin-bottom: 15px;
