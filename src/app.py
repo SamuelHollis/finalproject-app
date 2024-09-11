@@ -196,108 +196,115 @@ st.markdown(page_bg_css, unsafe_allow_html=True)
 # Título de la aplicación
 st.title("SENTIMENT ANALYSIS")
 
-# Section 1: Individual Sentence Analysis
-st.subheader("📝 Analyze a Single Sentence")
+# Crear un menú de selección
+option = st.radio("Choose an option", ("Analyze a Single Sentence", "Analyze CSV File"))
 
-# Campo para que el usuario ingrese una oración
-user_input = st.text_area("Write a sentence to analyze", "", key="single_sentence_input")
+if option == "Analyze a Single Sentence":
 
-if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
-    if user_input:  # Si el usuario ha ingresado texto
-        with st.spinner("🔄 Analyzing sentence..."):
-            try:
-                # Obtener los scores completos de cada etiqueta
-                scores = get_sentiment_scores(user_input)
-                
-                # Crear DataFrame con los scores
-                sentiment_df = pd.DataFrame({
-                    'Sentiment': label_mapping,
-                    'Probability': [score * 100 for score in scores]  # Convertir a porcentaje
-                })
+    # Section 1: Individual Sentence Analysis
+    st.subheader("📝 Analyze a Single Sentence")
 
-                # Mostrar el resultado del análisis principal
-                sentiment = label_mapping[np.argmax(scores)]
-                confidence = max(scores) * 100
+    # Campo para que el usuario ingrese una oración
+    user_input = st.text_area("Write a sentence to analyze", "", key="single_sentence_input")
 
-                st.markdown(f"""
-                <div class="result-card">
-                    <div class="card-header">Analysis Result:</div>
-                    <p><strong>Sentiment:</strong> {sentiment}</p>
-                    <p><strong>Confidence:</strong> {confidence:.2f}%</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Configurar tema de Seaborn
-                sns.set_theme(style="whitegrid", font_scale=1.2)
-                
-                # Crear una paleta personalizada
-                colors = sns.color_palette("icefire")
+    if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
+        if user_input:  # Si el usuario ha ingresado texto
+            with st.spinner("🔄 Analyzing sentence..."):
+                try:
+                    # Obtener los scores completos de cada etiqueta
+                    scores = get_sentiment_scores(user_input)
+                    
+                    # Crear DataFrame con los scores
+                    sentiment_df = pd.DataFrame({
+                        'Sentiment': label_mapping,
+                        'Probability': [score * 100 for score in scores]  # Convertir a porcentaje
+                    })
 
-                # Crear el gráfico con barras horizontales
-                fig, ax = plt.subplots(figsize=(7, 4))
+                    # Mostrar el resultado del análisis principal
+                    sentiment = label_mapping[np.argmax(scores)]
+                    confidence = max(scores) * 100
 
-                # Cambiar la opacidad de las barras y usar una paleta de colores
-                sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette=colors, ax=ax, alpha=1)  # alpha controla la opacidad
+                    st.markdown(f"""
+                    <div class="result-card">
+                        <div class="card-header">Analysis Result:</div>
+                        <p><strong>Sentiment:</strong> {sentiment}</p>
+                        <p><strong>Confidence:</strong> {confidence:.2f}%</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Configurar tema de Seaborn
+                    sns.set_theme(style="whitegrid", font_scale=1.2)
+                    
+                    # Crear una paleta personalizada
+                    colors = sns.color_palette("icefire")
 
-                # Añadir los valores sobre las barras
-                for index, value in enumerate(sentiment_df['Probability']):
-                    ax.text(value + 1, index, f'{value:.2f}%', va='center', fontweight='bold', fontsize=11)
+                    # Crear el gráfico con barras horizontales
+                    fig, ax = plt.subplots(figsize=(7, 4))
 
-                # Estilo del gráfico
-                ax.set_title("Sentiment Probabilities", fontsize=16, fontweight='bold', color="#333")
-                ax.set_xlim(0, 100)  # Limitar el eje de las probabilidades a 100%
-                ax.set_xlabel("Probability (%)", fontsize=12, fontweight='bold')
-                ax.set_ylabel("Sentiment", fontsize=12, fontweight='bold')
+                    # Cambiar la opacidad de las barras y usar una paleta de colores
+                    sns.barplot(x="Probability", y="Sentiment", data=sentiment_df, palette=colors, ax=ax, alpha=1)  # alpha controla la opacidad
 
-                # Añadir un borde redondeado al gráfico
-                bbox = FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0.05", linewidth=2, edgecolor="black", facecolor='none', transform=ax.transAxes)
-                ax.add_patch(bbox)
+                    # Añadir los valores sobre las barras
+                    for index, value in enumerate(sentiment_df['Probability']):
+                        ax.text(value + 1, index, f'{value:.2f}%', va='center', fontweight='bold', fontsize=11)
 
-                # Añadir un borde suave al gráfico y mejorar su presentación
-                sns.despine(left=True, bottom=True)
-                plt.tight_layout()
+                    # Estilo del gráfico
+                    ax.set_title("Sentiment Probabilities", fontsize=16, fontweight='bold', color="#333")
+                    ax.set_xlim(0, 100)  # Limitar el eje de las probabilidades a 100%
+                    ax.set_xlabel("Probability (%)", fontsize=12, fontweight='bold')
+                    ax.set_ylabel("Sentiment", fontsize=12, fontweight='bold')
 
-                # Mostrar el gráfico en Streamlit
+                    # Añadir un borde redondeado al gráfico
+                    bbox = FancyBboxPatch((0, 0), 1, 1, boxstyle="round,pad=0.05", linewidth=2, edgecolor="black", facecolor='none', transform=ax.transAxes)
+                    ax.add_patch(bbox)
+
+                    # Añadir un borde suave al gráfico y mejorar su presentación
+                    sns.despine(left=True, bottom=True)
+                    plt.tight_layout()
+
+                    # Mostrar el gráfico en Streamlit
+                    st.pyplot(fig)
+
+
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
+
+elif option == "Analyze CSV File":
+
+    # Sección 2: Análisis de archivo CSV
+    st.subheader("📂 Analyze CSV File")
+    uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
+
+    if uploaded_file is not None:
+        # Cargar el archivo CSV sin incluir el índice como columna
+        df = pd.read_csv(uploaded_file, index_col=None)
+
+        # Mostrar las primeras filas del CSV
+        st.write("First 5 comments from the file:")
+        st.write(df.head())
+
+        # Botón para ejecutar el análisis de sentimientos en el CSV
+        if st.button("🔍 Analyze Sentiments in CSV"):
+            if 'text' not in df.columns:
+                st.error("The CSV file must contain a 'text' column.")
+            else:
+                with st.spinner("🔄 Analyzing sentiments, please wait..."):
+                    analyzed_df = analyze_sentiments_csv(df)
+
+                st.success("✅ Analysis complete!")
+
+                # Mostrar resultados
+                st.write("Analysis Results:")
+                st.write(analyzed_df.head())
+
+                # Calcular y mostrar porcentajes de sentimientos
+                percentages = calculate_sentiment_percentages(analyzed_df)
+                labels = ['Negative', 'Neutral', 'Positive']
+                colors = ['#FF6B6B', '#F7D794', '#4CAF50']
+
+                # Crear gráfico de barras
+                fig, ax = plt.subplots()
+                ax.barh(labels, percentages, color=colors)
+                ax.set_xlabel('Percentage (%)')
+                ax.set_title('Sentiment Distribution')
                 st.pyplot(fig)
-
-
-            except Exception as e:
-                st.error(f"An error occurred: {e}")
-
-# Sección 2: Análisis de archivo CSV
-st.subheader("📂 Analyze CSV File")
-uploaded_file = st.file_uploader("Upload a CSV file with a 'text' column", type=["csv"])
-
-if uploaded_file is not None:
-    # Cargar el archivo CSV sin incluir el índice como columna
-    df = pd.read_csv(uploaded_file, index_col=None)
-
-    # Mostrar las primeras filas del CSV
-    st.write("First 5 comments from the file:")
-    st.write(df.head())
-
-    # Botón para ejecutar el análisis de sentimientos en el CSV
-    if st.button("🔍 Analyze Sentiments in CSV"):
-        if 'text' not in df.columns:
-            st.error("The CSV file must contain a 'text' column.")
-        else:
-            with st.spinner("🔄 Analyzing sentiments, please wait..."):
-                analyzed_df = analyze_sentiments_csv(df)
-
-            st.success("✅ Analysis complete!")
-
-            # Mostrar resultados
-            st.write("Analysis Results:")
-            st.write(analyzed_df.head())
-
-            # Calcular y mostrar porcentajes de sentimientos
-            percentages = calculate_sentiment_percentages(analyzed_df)
-            labels = ['Negative', 'Neutral', 'Positive']
-            colors = ['#FF6B6B', '#F7D794', '#4CAF50']
-
-            # Crear gráfico de barras
-            fig, ax = plt.subplots()
-            ax.barh(labels, percentages, color=colors)
-            ax.set_xlabel('Percentage (%)')
-            ax.set_title('Sentiment Distribution')
-            st.pyplot(fig)
