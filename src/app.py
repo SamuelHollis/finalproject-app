@@ -35,29 +35,19 @@ def load_sentiment_model():
 
 def load_political_model():
     try:
-        # Autenticación de Google Drive
-        gauth = GoogleAuth()
-        gauth.LocalWebserverAuth()  # Abre el navegador para autenticar
+        # URL pública de Google Drive (ID correcto del archivo)
+        url = 'https://drive.google.com/uc?id=1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw'
 
-        # Crear una instancia de Google Drive con la autenticación
-        drive = GoogleDrive(gauth)
-
-        # ID del archivo de Google Drive (extraído de tu enlace de Google Drive)
-        file_id = '1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw'
-
-        # Descargar el archivo desde Google Drive
-        downloaded = drive.CreateFile({'id': file_id})
-
-        # Crear un archivo temporal para guardar el modelo
+        # Crear un archivo temporal para descargar el modelo
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             model_path = tmp_file.name
 
-        # Guardar el contenido del archivo descargado en el archivo temporal
-        downloaded.GetContentFile(model_path)
+        # Descargar el archivo del modelo desde Google Drive
+        gdown.download(url, model_path, quiet=False)
 
         # Inicializar el modelo con la arquitectura adecuada
         model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
-        
+
         # Cargar los pesos guardados en el archivo descargado temporalmente
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
@@ -73,9 +63,6 @@ def load_political_model():
     except Exception as e:
         st.error(f"Error loading the political model: {e}")
         st.stop()
-
-# Llamar a la función para cargar el modelo en la app
-political_model, political_tokenizer, device = load_political_model()
 
 # Cargar modelos
 sentiment_model, sentiment_tokenizer, sentiment_device = load_sentiment_model()
