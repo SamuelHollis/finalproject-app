@@ -10,8 +10,6 @@ import seaborn as sns
 from scipy.special import softmax
 from matplotlib.patches import FancyBboxPatch
 import datasets
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
 import tempfile
 import gdown
                               
@@ -32,6 +30,7 @@ def load_sentiment_model():
         st.error(f"Error importing required backend: {e}")
         st.stop()
 
+'''
 def load_political_model():
     try:
         # URL pública de Google Drive (ID correcto del archivo)
@@ -62,10 +61,12 @@ def load_political_model():
     except Exception as e:
         st.error(f"Error loading the political model: {e}")
         st.stop()
+        
 
 # Cargar modelos
-sentiment_model, sentiment_tokenizer, sentiment_device = load_sentiment_model()
 political_model, political_tokenizer, political_device = load_political_model()
+'''
+sentiment_model, sentiment_tokenizer, sentiment_device = load_sentiment_model()
 
 # Mapeo de etiquetas para el análisis de sentimientos y político
 sentiment_label_mapping = {0:'Negative', 1:'Neutral', 2:'Positive'}
@@ -92,6 +93,7 @@ def get_sentiment_scores(text):
     return sentiment_label_mapping[predicted_label]  # Devolver la etiqueta correspondiente
 
 # Obtener la predicción de la clase política (Republicano o Demócrata)
+'''
 def get_political_classification(text):
     text = preprocess(text)
     encoded_input = political_tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512)
@@ -106,7 +108,7 @@ def get_political_classification(text):
         predicted_label = np.argmax(probabilities, axis=1)[0]
         print(f"Predicted Label: {predicted_label}")  # Verificar qué clase está prediciendo
         return political_label_mapping[predicted_label]
-
+'''
 # Función para analizar los sentimientos de un archivo CSV y actualizar la barra de progreso
 def analyze_sentiments_csv(df):
     total_chunks = len(df)
@@ -130,8 +132,8 @@ def analyze_sentiments_csv(df):
             positive_scores.append(sentiment_scores[2])
 
             # Análisis político
-            political_class = get_political_classification(text)
-            political_classes.append(political_class)
+            #political_class = get_political_classification(text)
+            #political_classes.append(political_class)
 
         except Exception as e:
             st.error(f"Error during analysis: {e}")
@@ -271,7 +273,7 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                 sentiment_scores = get_sentiment_scores(user_input)
 
                 # Obtener la clasificación política
-                political_class = get_political_classification(user_input)
+                #political_class = get_political_classification(user_input)
 
                 # Crear DataFrame con los scores
                 sentiment_df = pd.DataFrame({
@@ -288,7 +290,7 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
                     <div class="card-header">Analysis Result:</div>
                     <p><strong>Sentiment:</strong> {sentiment}</p>
                     <p><strong>Confidence:</strong> {confidence:.2f}%</p>
-                    <p><strong>Political Class:</strong> {political_class}</p>
+                    <p><strong>Political Class:</strong> {'''political_class'''}</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
