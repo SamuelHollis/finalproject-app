@@ -34,7 +34,7 @@ def load_sentiment_model():
 def load_political_model():
     try:
         # URL pública de Google Drive (cambia "your_file_id" por el ID de tu archivo en Google Drive)
-        url = 'https://drive.google.com/uc?id=your_file_id'
+        url = 'https://drive.google.com/file/d/1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw/view?usp=drive_link'
         output = 'src/models/modelo_entrenado.pth'
 
         # Descargar el modelo desde Google Drive
