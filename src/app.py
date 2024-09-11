@@ -11,6 +11,7 @@ from scipy.special import softmax
 from matplotlib.patches import FancyBboxPatch
 import pickle
 import datasets
+import gdown
 
                               
 # Cargar el modelo y tokenizador para análisis de sentimiento
@@ -32,14 +33,18 @@ def load_sentiment_model():
 
 def load_political_model():
     try:
-        model_path = 'https://drive.google.com/file/d/1rxXWU7L7aRQeO7q5zHNTjLWJsxXO8aYD/view?usp=drive_link'
+        # URL pública de Google Drive (cambia "your_file_id" por el ID de tu archivo en Google Drive)
+        url = 'https://drive.google.com/uc?id=your_file_id'
+        output = 'src/models/modelo_entrenado.pth'
 
+        # Descargar el modelo desde Google Drive
+        gdown.download(url, output, quiet=False)
 
         # Inicializar el modelo con la arquitectura adecuada
         model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
 
-        # Cargar los pesos guardados con torch.save
-        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        # Cargar los pesos guardados en el archivo descargado
+        model.load_state_dict(torch.load(output, map_location=torch.device('cpu')))
 
         # Cargar el tokenizador de RoBERTa base
         tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
@@ -49,7 +54,6 @@ def load_political_model():
         model.to(device)
 
         return model, tokenizer, device
-    
     except Exception as e:
         st.error(f"Error loading the political model: {e}")
         st.stop()
