@@ -14,7 +14,7 @@ import datasets
 import pydrive
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-
+import tempfile
                               
 # Cargar el modelo y tokenizador para análisis de sentimiento
 def load_sentiment_model():
