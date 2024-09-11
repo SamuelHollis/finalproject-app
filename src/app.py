@@ -12,6 +12,7 @@ from matplotlib.patches import FancyBboxPatch
 import pickle
 import datasets
 import gdown
+import tempfile
 
                               
 # Cargar el modelo y tokenizador para análisis de sentimiento
@@ -33,18 +34,21 @@ def load_sentiment_model():
 
 def load_political_model():
     try:
-        # URL pública de Google Drive (cambia "your_file_id" por el ID de tu archivo en Google Drive)
-        url = 'https://drive.google.com/file/d/1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw/view?usp=drive_link'
-        output = 'src/models/modelo_entrenado.pth'
+        # URL pública de Google Drive (ID correcto)
+        url = 'https://drive.google.com/uc?id=1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw'
+        
+        # Crear un archivo temporal para descargar el modelo
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
+            model_path = tmp_file.name
 
-        # Descargar el modelo desde Google Drive
-        gdown.download(url, output, quiet=False)
+        # Descargar el archivo del modelo desde Google Drive a la ubicación temporal
+        gdown.download(url, model_path, quiet=False)
 
         # Inicializar el modelo con la arquitectura adecuada
         model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
 
-        # Cargar los pesos guardados en el archivo descargado
-        model.load_state_dict(torch.load(output, map_location=torch.device('cpu')))
+        # Cargar los pesos guardados en el archivo descargado temporalmente
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
         # Cargar el tokenizador de RoBERTa base
         tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
@@ -54,6 +58,7 @@ def load_political_model():
         model.to(device)
 
         return model, tokenizer, device
+
     except Exception as e:
         st.error(f"Error loading the political model: {e}")
         st.stop()
