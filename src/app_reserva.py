@@ -3,19 +3,18 @@ import pandas as pd
 import logging
 import time
 import numpy as np
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, RobertaTokenizer
+from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
 import torch
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.special import softmax
 from matplotlib.patches import FancyBboxPatch
-import pickle
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-                              
-# Cargar el modelo y tokenizador para análisis de sentimiento
-def load_sentiment_model():
+
+# Cargar el modelo y tokenizador localmente
+def load_local_model():
     try:
         model_name = "cardiffnlp/twitter-roberta-base-sentiment"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -23,43 +22,20 @@ def load_sentiment_model():
         # Detectar si CUDA está disponible
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Cargar el modelo y moverlo a la GPU si está disponible
+        # Intentar cargar el modelo y moverlo a la GPU si está disponible
         model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
-        return model, tokenizer, device
+
+        return model, tokenizer
 
     except ImportError as e:
         st.error(f"Error importing required backend: {e}")
         st.stop()
 
-# Cargar el modelo político reentrenado (usando pickle) y el tokenizador de RoBERTa base
-def load_political_model():
-    try:
-        model_path = r"C:\Users\samue\OneDrive\Escritorio\Docs\4GeeksAcademy\FINAL_PROJECT\4geeks_finalproject\src\modelo_entrenado.pkl"
-        
-        # Cargar el modelo guardado con pickle
-        with open(model_path, 'rb') as file:
-            model = pickle.load(file)
+# Cargar el modelo local
+model, tokenizer = load_local_model()
 
-        # Cargar el tokenizador de RoBERTa base
-        tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
-
-        # Detectar si CUDA está disponible
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model.to(device)
-
-        return model, tokenizer, device
-
-    except Exception as e:
-        st.error(f"Error loading the political model: {e}")
-        st.stop()
-
-# Cargar modelos
-sentiment_model, sentiment_tokenizer, sentiment_device = load_sentiment_model()
-political_model, political_tokenizer, political_device = load_political_model()
-
-# Mapeo de etiquetas para el análisis de sentimientos y político
-sentiment_label_mapping = {0:'Negative', 1:'Neutral', 2:'Positive'}
-political_label_mapping = {0: "Republicano", 1: "Demócrata"}
+# Mapeo de etiquetas
+label_mapping = ['Negative', 'Neutral', 'Positive']
 
 # Preprocesar texto
 def preprocess(text):
@@ -70,29 +46,14 @@ def preprocess(text):
         new_text.append(t)
     return " ".join(new_text)
 
-# Obtener los scores del análisis de sentimiento y devolver la etiqueta correspondiente
+# Función para obtener los scores de cada etiqueta (Negative, Neutral, Positive)
 def get_sentiment_scores(text):
     text = preprocess(text)
-    encoded_input = sentiment_tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512)
-    encoded_input = {key: value.to(sentiment_device) for key, value in encoded_input.items()}
-    output = sentiment_model(**encoded_input)
-    scores = output[0][0].detach().cpu().numpy()
-    scores = softmax(scores, axis=-1)  # Aplicar softmax para obtener las probabilidades
-    predicted_label = np.argmax(scores, axis=-1)  # Obtener el índice de la clase con mayor puntaje
-    return sentiment_label_mapping[predicted_label]  # Devolver la etiqueta correspondiente
-
-# Obtener la predicción de la clase política (Republicano o Demócrata)
-def get_political_classification(text):
-    text = preprocess(text)
-    encoded_input = political_tokenizer(text, return_tensors='pt', padding=True, truncation=True, max_length=512)
-    encoded_input = {key: value.to(political_device) for key, value in encoded_input.items()}
-
-    with torch.no_grad():
-        outputs = political_model(**encoded_input)
-        logits = outputs.logits
-        probabilities = softmax(logits.cpu().numpy(), axis=1)
-        predicted_label = np.argmax(probabilities, axis=1)[0]
-        return political_label_mapping[predicted_label]
+    encoded_input = tokenizer(text, return_tensors='pt')
+    output = model(**encoded_input)
+    scores = output[0][0].detach().numpy()
+    scores = softmax(scores)  # Aplicar softmax para obtener las probabilidades
+    return scores
 
 # Función para analizar los sentimientos de un archivo CSV y actualizar la barra de progreso
 def analyze_sentiments_csv(df):
@@ -104,52 +65,43 @@ def analyze_sentiments_csv(df):
     negative_scores = []
     neutral_scores = []
     positive_scores = []
-    political_classes = []  # Añadir almacenamiento para clases políticas
 
     for idx, row in df.iterrows():
         text = row['text']
+        # Obtener los scores de cada sentimiento
         try:
-            # Análisis de sentimiento
-            sentiment_scores = get_sentiment_scores(text)
-            sentiments.append(sentiment_label_mapping[np.argmax(sentiment_scores)])  # El sentimiento con mayor puntuación
-            negative_scores.append(sentiment_scores[0])
-            neutral_scores.append(sentiment_scores[1])
-            positive_scores.append(sentiment_scores[2])
-
-            # Análisis político
-            political_class = get_political_classification(text)
-            political_classes.append(political_class)
-
+            scores = get_sentiment_scores(text)
+            sentiments.append(label_mapping[np.argmax(scores)])  # El sentimiento con mayor puntuación
+            negative_scores.append(scores[0])
+            neutral_scores.append(scores[1])
+            positive_scores.append(scores[2])
         except Exception as e:
-            st.error(f"Error during analysis: {e}")
+            st.error(f"Error during sentiment analysis: {e}")
             sentiments.append("error")
             negative_scores.append(0)
             neutral_scores.append(0)
             positive_scores.append(0)
-            political_classes.append("error")
 
         # Actualizar barra de progreso
         progress_percentage = (idx + 1) / total_chunks
         progress_bar.progress(progress_percentage)
         progress_text.text(f"Processing {idx + 1} of {total_chunks}")
 
-    # Añadir la columna de clases políticas al DataFrame
     df['sentiment'] = sentiments
     df['negative_score'] = negative_scores
     df['neutral_score'] = neutral_scores
     df['positive_score'] = positive_scores
-    df['political_class'] = political_classes
 
     # Completar la barra de progreso
     progress_bar.progress(1.0)
-    st.success("Sentiment and political analysis complete!")
+    st.success("Sentiment analysis complete!")
 
     # Convertir el DataFrame en CSV y permitir la descarga
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(
         label="⬇️ Download results as CSV",
         data=csv,
-        file_name='sentiment_political_analysis_results.csv',
+        file_name='sentiment_analysis_results.csv',
         mime='text/csv',
     )
 
@@ -255,33 +207,29 @@ if st.button("📊 Analyze Sentence", key="analyze_sentence_button"):
         with st.spinner("🔄 Analyzing sentence..."):
             try:
                 # Obtener los scores completos de cada etiqueta
-                sentiment_scores = get_sentiment_scores(user_input)
-
-                # Obtener la clasificación política
-                political_class = get_political_classification(user_input)
-
+                scores = get_sentiment_scores(user_input)
+                
                 # Crear DataFrame con los scores
                 sentiment_df = pd.DataFrame({
-                    'Sentiment': sentiment_label_mapping,
-                    'Probability': [score * 100 for score in sentiment_scores]  # Convertir a porcentaje
+                    'Sentiment': label_mapping,
+                    'Probability': [score * 100 for score in scores]  # Convertir a porcentaje
                 })
 
                 # Mostrar el resultado del análisis principal
-                sentiment = sentiment_label_mapping[np.argmax(sentiment_scores)]
-                confidence = max(sentiment_scores) * 100
+                sentiment = label_mapping[np.argmax(scores)]
+                confidence = max(scores) * 100
 
                 st.markdown(f"""
                 <div class="result-card">
                     <div class="card-header">Analysis Result:</div>
                     <p><strong>Sentiment:</strong> {sentiment}</p>
                     <p><strong>Confidence:</strong> {confidence:.2f}%</p>
-                    <p><strong>Political Class:</strong> {political_class}</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # Configurar tema de Seaborn
                 sns.set_theme(style="whitegrid", font_scale=1.2)
-
+                
                 # Crear una paleta personalizada
                 colors = sns.color_palette("icefire")
 
@@ -329,7 +277,7 @@ if uploaded_file is not None:
     st.write(df.head())
 
     # Botón para ejecutar el análisis de sentimientos en el CSV
-    if st.button("🔍 Analyze Sentiments and Political Class in CSV"):
+    if st.button("🔍 Analyze Sentiments in CSV"):
         if 'text' not in df.columns:
             st.error("The CSV file must contain a 'text' column.")
         else:
