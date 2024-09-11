@@ -12,6 +12,8 @@ from matplotlib.patches import FancyBboxPatch
 import pickle
 import datasets
 import pydrive
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
                               
 # Cargar el modelo y tokenizador para análisis de sentimiento
