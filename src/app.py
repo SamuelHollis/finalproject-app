@@ -41,7 +41,7 @@ def load_political_model():
         drive = GoogleDrive(gauth)
 
         # ID del archivo de Google Drive
-        file_id = '1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw'
+        file_id = 'https://drive.google.com/file/d/1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw/view?usp=drive_link'
         downloaded = drive.CreateFile({'id': file_id})
 
         # Crear un archivo temporal para descargar el modelo
