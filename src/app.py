@@ -90,8 +90,11 @@ def get_political_classification(text):
     with torch.no_grad():
         outputs = political_model(**encoded_input)
         logits = outputs.logits
+        print(f"Logits: {logits}")  # Añadir print para ver los logits
         probabilities = softmax(logits.cpu().numpy(), axis=1)
+        print(f"Probabilities: {probabilities}")  # Añadir print para ver las probabilidades
         predicted_label = np.argmax(probabilities, axis=1)[0]
+        print(f"Predicted Label: {predicted_label}")  # Verificar qué clase está prediciendo
         return political_label_mapping[predicted_label]
 
 # Función para analizar los sentimientos de un archivo CSV y actualizar la barra de progreso
