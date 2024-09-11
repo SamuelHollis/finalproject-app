@@ -117,8 +117,8 @@ page_bg_css = '''
 <style>
 body {
     background: url("https://www.omfif.org/wp-content/uploads/2024/01/GettyImages-1183053829.jpg");
-    background-size: cover;
-    background-position: cover;
+    background-size: center;
+    background-position: center;
     background-repeat: no-repeat;
     font-family: 'Helvetica Neue', sans-serif;
     opacity: 0.7;
