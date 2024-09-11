@@ -37,22 +37,28 @@ def load_political_model():
     try:
         # Autenticación de Google Drive
         gauth = GoogleAuth()
-        gauth.LocalWebserverAuth()  # Autenticación local usando navegador
+        gauth.LocalWebserverAuth()  # Abre el navegador para autenticar
+
+        # Crear una instancia de Google Drive con la autenticación
         drive = GoogleDrive(gauth)
 
-        # ID del archivo de Google Drive
-        file_id = 'https://drive.google.com/file/d/1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw/view?usp=drive_link'
+        # ID del archivo de Google Drive (extraído de tu enlace de Google Drive)
+        file_id = '1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw'
+
+        # Descargar el archivo desde Google Drive
         downloaded = drive.CreateFile({'id': file_id})
 
-        # Crear un archivo temporal para descargar el modelo
+        # Crear un archivo temporal para guardar el modelo
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             model_path = tmp_file.name
 
-        # Descargar el archivo
+        # Guardar el contenido del archivo descargado en el archivo temporal
         downloaded.GetContentFile(model_path)
 
         # Inicializar el modelo con la arquitectura adecuada
         model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
+        
+        # Cargar los pesos guardados en el archivo descargado temporalmente
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
         # Cargar el tokenizador de RoBERTa base
