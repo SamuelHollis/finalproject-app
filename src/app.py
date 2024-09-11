@@ -10,9 +10,8 @@ import seaborn as sns
 from scipy.special import softmax
 from matplotlib.patches import FancyBboxPatch
 import pickle
+import datasets
 
-# Logging configuration
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
                               
 # Cargar el modelo y tokenizador para análisis de sentimiento
 def load_sentiment_model():
@@ -31,27 +30,30 @@ def load_sentiment_model():
         st.error(f"Error importing required backend: {e}")
         st.stop()
 
-# Cargar el modelo político reentrenado (usando pickle) y el tokenizador de RoBERTa base
 def load_political_model():
     try:
-        model_path = r"C:\Users\samue\OneDrive\Escritorio\Docs\4GeeksAcademy\FINAL_PROJECT\4geeks_finalproject\src\modelo_entrenado.pkl"
-        
-        # Cargar el modelo guardado con pickle
-        with open(model_path, 'rb') as file:
-            model = pickle.load(file)
+        model_path = r"C:\Users\samue\OneDrive\Escritorio\Docs\4GeeksAcademy\FINAL_PROJECT\4geeks_finalproject\src\modelo_entrenado.pth"
+
+        # Inicializar el modelo con la arquitectura adecuada
+        model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
+
+        # Cargar los pesos guardados con torch.save
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
         # Cargar el tokenizador de RoBERTa base
         tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
 
-        # Detectar si CUDA está disponible
+        # Detectar si CUDA está disponible y mover el modelo al dispositivo adecuado
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         model.to(device)
 
         return model, tokenizer, device
-
     except Exception as e:
         st.error(f"Error loading the political model: {e}")
         st.stop()
+
+# Llamar a la función para cargar el modelo en la app
+political_model, political_tokenizer, device = load_political_model()
 
 # Cargar modelos
 sentiment_model, sentiment_tokenizer, sentiment_device = load_sentiment_model()
