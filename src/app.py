@@ -116,14 +116,12 @@ def calculate_sentiment_percentages(df):
 page_bg_css = '''
 <style>
 body {
-    background-image: url("https://www.omfif.org/wp-content/uploads/2024/01/GettyImages-1183053829.jpg");
-    background-image: no-repeat;
-    background-image: fixed;
-    background-image: center;
-    -webkit-background-size: cover;
-    -moz-background-size: cover;
-    -o-background-size: cover;
+    background: url("https://www.omfif.org/wp-content/uploads/2024/01/GettyImages-1183053829.jpg");
     background-size: cover;
+    background-position: cover;
+    background-repeat: no-repeat;
+    font-family: 'Helvetica Neue', sans-serif;
+    opacity: 0.7;
 }
 [data-testid="stAppViewContainer"] {
     background: rgba(0, 0, 0, 0.7);
