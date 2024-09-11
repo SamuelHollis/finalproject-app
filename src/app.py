@@ -11,8 +11,7 @@ from scipy.special import softmax
 from matplotlib.patches import FancyBboxPatch
 import pickle
 import datasets
-import gdown
-import tempfile
+import pydrive
 
                               
 # Cargar el modelo y tokenizador para análisis de sentimiento
@@ -34,35 +33,24 @@ def load_sentiment_model():
 
 def load_political_model():
     try:
-        # URL pública de Google Drive (ID correcto)
-        url = 'https://drive.google.com/uc?id=1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw'
-        
-        # Número de reintentos si la descarga falla
-        max_retries = 3
-        retry_count = 0
-        success = False
-        
+        # Autenticación de Google Drive
+        gauth = GoogleAuth()
+        gauth.LocalWebserverAuth()  # Autenticación local usando navegador
+        drive = GoogleDrive(gauth)
+
+        # ID del archivo de Google Drive
+        file_id = '1b1DwXnlmgozEgCULRGmx1bvvxzyYXpUw'
+        downloaded = drive.CreateFile({'id': file_id})
+
         # Crear un archivo temporal para descargar el modelo
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             model_path = tmp_file.name
 
-        # Intentar descargar el archivo del modelo
-        while retry_count < max_retries and not success:
-            try:
-                gdown.download(url, model_path, quiet=False)
-                success = True  # Si la descarga se completa correctamente
-            except Exception as e:
-                retry_count += 1
-                st.warning(f"Error downloading model (Attempt {retry_count}/{max_retries}): {e}")
-                time.sleep(5)  # Esperar 5 segundos antes de intentar nuevamente
-                if retry_count == max_retries:
-                    st.error("Failed to download model after multiple attempts.")
-                    st.stop()
+        # Descargar el archivo
+        downloaded.GetContentFile(model_path)
 
         # Inicializar el modelo con la arquitectura adecuada
         model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
-
-        # Cargar los pesos guardados en el archivo descargado temporalmente
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 
         # Cargar el tokenizador de RoBERTa base
