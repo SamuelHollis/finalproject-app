@@ -48,6 +48,7 @@ def load_political_model():
         model.to(device)
 
         return model, tokenizer, device
+    
     except Exception as e:
         st.error(f"Error loading the political model: {e}")
         st.stop()

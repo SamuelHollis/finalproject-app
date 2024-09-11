@@ -8,3 +8,4 @@ numpy
 requests
 scipy
 torch
+datasets
