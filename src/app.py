@@ -32,7 +32,8 @@ def load_sentiment_model():
 
 def load_political_model():
     try:
-        model_path = r"C:\Users\samue\OneDrive\Escritorio\Docs\4GeeksAcademy\FINAL_PROJECT\4geeks_finalproject\src\modelo_entrenado.pth"
+        model_path = 'https://drive.google.com/file/d/1rxXWU7L7aRQeO7q5zHNTjLWJsxXO8aYD/view?usp=drive_link'
+
 
         # Inicializar el modelo con la arquitectura adecuada
         model = AutoModelForSequenceClassification.from_pretrained("roberta-base", num_labels=2)
