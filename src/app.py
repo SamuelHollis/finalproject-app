@@ -9,12 +9,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.special import softmax
 from matplotlib.patches import FancyBboxPatch
-import pickle
 import datasets
-import pydrive
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import tempfile
+import gdown
                               
 # Cargar el modelo y tokenizador para análisis de sentimiento
 def load_sentiment_model():
