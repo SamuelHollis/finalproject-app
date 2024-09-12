@@ -280,7 +280,7 @@ elif option == "Analyze CSV File":
         df = pd.read_csv(uploaded_file, index_col=None)
 
         # Mostrar las primeras filas del CSV
-        st.write("First 5 comments from the file:")
+        st.write("First 5 rows from the file:")
         st.write(df.head())
 
         # Botón para ejecutar el análisis de sentimientos en el CSV
