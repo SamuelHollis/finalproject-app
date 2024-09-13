@@ -105,7 +105,7 @@ def analyze_sentiments_csv(df):
         mime='text/csv',
     )
 
-    return df
+    return df.drop('Unnamed: 0', inplce=True)
 
 # Función para calcular los porcentajes de cada sentimiento
 def calculate_sentiment_percentages(df):
