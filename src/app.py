@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Cargar el modelo y tokenizador localmente
 def load_local_model():
     try:
-        model_name = "cardiffnlp/twitter-roberta-base-sentiment"
+        model_name = "cardiffnlp/twitter-roberta-base-sentiment-latest"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         # Detectar si CUDA está disponible
